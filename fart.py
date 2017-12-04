@@ -88,10 +88,10 @@ class Sensor:
         self.sensorId = sensorId
 
 
-    async def get_temp(self, sensor=None):
+    async def get_temp(self):
         await asyncio.sleep(2)
         return 24.0
-#        async with aiofiles.open('/sys/bus/w1/devices/%s/w1_slave'% sensor, mode='r') as sensor_file:
+#        async with aiofiles.open('/sys/bus/w1/devices/%s/w1_slave'% self.sensorId, mode='r') as sensor_file:
 #            contents = await sensor_file.read()
 #        if (contents.split('\n')[0].split(' ')[11] == "YES"):
 #            temp = float(contents.split("=")[-1]) / 1000
@@ -101,7 +101,7 @@ class Sensor:
 
 
     async def get(self, request):
-        temp = await self.get_temp(self.sensorId)
+        temp = await self.get_temp()
         return web.Response(text="%f"%temp)
 
 class Controller:
