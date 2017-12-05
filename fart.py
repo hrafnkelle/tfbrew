@@ -2,6 +2,9 @@ import asyncio
 import aiofiles
 from aiohttp import web
 import time
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BCM)
+print("Setting BCM mode")
 
 class PIDArduino(object):
 
@@ -72,37 +75,52 @@ class PIDArduino(object):
 
 
 class Heater:
-    def __init__(self):
+    def __init__(self, pin=18):
         self.power = 0.0
+        self.pin = pin
+        self.frequency = 2.0
+        GPIO.setup(self.pin, GPIO.OUT)
+        print("pin: %d"%self.pin)
+        self.p = GPIO.PWM(self.pin, self.frequency)
+        self.p.start(self.power)
+
+    def updatePower(self, power):
+        self.power = power
+        self.p.ChangeDutyCycle(self.power)
 
     async def get(self, request):
         return web.Response(text="%f"%self.power)
 
     async def post(self, request):
         power_str = await request.text()
-        self.power = float(power_str)
+        self.updatePower(float(power_str))
         return web.Response()
 
 class Sensor:
     def __init__(self, sensorId):
         self.sensorId = sensorId
+        self.lastTemp = 0.0
 
 
-    async def get_temp(self, sensor=None):
+    async def pollTempLoop(self):
+        self.lastTemp = await self.get_temp()
         await asyncio.sleep(2)
-        return 24.0
-#        async with aiofiles.open('/sys/bus/w1/devices/%s/w1_slave'% sensor, mode='r') as sensor_file:
-#            contents = await sensor_file.read()
-#        if (contents.split('\n')[0].split(' ')[11] == "YES"):
-#            temp = float(contents.split("=")[-1]) / 1000
-#            return temp
-#        else:
-#            return -100
 
 
-    async def get(self, request):
-        temp = await self.get_temp(self.sensorId)
-        return web.Response(text="%f"%temp)
+    async def get_temp(self):
+#        await asyncio.sleep(2)
+#        return 24.0
+        async with aiofiles.open('/sys/bus/w1/devices/%s/w1_slave'% self.sensorId, mode='r') as sensor_file:
+            contents = await sensor_file.read()
+        if (contents.split('\n')[0].split(' ')[11] == "YES"):
+            temp = float(contents.split("=")[-1]) / 1000
+            return temp
+        else:
+            return -100
+
+
+    def get(self, request):
+        return web.Response(text="%f"%self.lastTemp)
 
 class Controller:
     def __init__(self, sensor, actor):
@@ -117,6 +135,8 @@ class Controller:
 
     async def postState(self, request):
         self.state = request.match_info['state']
+        if self.state == 'off':
+            self.actor.updatePower(0.0)
         return web.Response(text=self.state)
 
     async def postTemp(self, request):
@@ -129,11 +149,11 @@ class Controller:
 
     async def run(self):
         if self.state == 'on':
-            inputTemp = await self.sensor.get_temp()
-            output = self.pid.calc(inputTemp, self.targetTemp)
-            self.actor.power = output
+            output = self.pid.calc(self.sensor.lastTemp, self.targetTemp)
+            self.actor.updatePower(output)
+            await asyncio.sleep(1)
         else:
-            self.actor.power = 0.0
+            self.actor.updatePower(0)
             await asyncio.sleep(1)
 
 sensor = Sensor("28-000004b8240b") 
@@ -144,13 +164,22 @@ async def controller_runner(app):
     while True:
         await ctrl.run()
 
+async def temp_poller(app):
+    while True:
+        tic = time.time()
+        await sensor.pollTempLoop()
+        toc = time.time()-tic
+        print("sensor poll delay %f"%toc)
 
 async def start_background_tasks(app):
     app['controller_runner'] = app.loop.create_task(controller_runner(app))
+    app['temp_poller'] = app.loop.create_task(temp_poller(app))
 
 async def cleanup_background_tasks(app):
     app['controller_runner'].cancel()
+    app['temp_poller'].cancel()
     await app['controller_runner']
+    await app['temp_poller']
 
 async def index(request):
     return web.FileResponse('index.html')
