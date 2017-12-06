@@ -1,0 +1,18 @@
+sensors:
+  - RecircTemp: 
+      id: 28-000004b8240b
+      offset: 1.2
+
+actors:
+  - Heater:
+      gpio: 18
+      pwmFrequency: 2
+  - Pump:
+      gpio: 17
+      pwmFrequency: 2
+
+control:
+  agitator: Pump
+  heater: Heater
+  sensor: RecircTemp
+  logic: pid

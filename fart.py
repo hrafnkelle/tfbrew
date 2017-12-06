@@ -22,7 +22,7 @@ class PIDArduino(object):
             raise ValueError('outputMin must be less than outputMax')
 
         self._Kp = kp
-        self._Ki = ki * sampleTimeSec
+        self._Ki = sampleTimeSec / ki
         self._Kd = kd / sampleTimeSec
         self._sampleTime = sampleTimeSec * 1000
         self._outputMin = outputMin
@@ -73,14 +73,16 @@ class PIDArduino(object):
     def _currentTimeMs(self):
         return time.time() * 1000
 
+class Runnable:
+    def run(self, app):
+        pass
 
-class Heater:
+class Actor:
     def __init__(self, pin=18):
         self.power = 0.0
         self.pin = pin
         self.frequency = 2.0
         GPIO.setup(self.pin, GPIO.OUT)
-        print("pin: %d"%self.pin)
         self.p = GPIO.PWM(self.pin, self.frequency)
         self.p.start(self.power)
 
@@ -91,23 +93,31 @@ class Heater:
     async def get(self, request):
         return web.Response(text="%f"%self.power)
 
-    async def post(self, request):
+    async def postPower(self, request):
         power_str = await request.text()
         self.updatePower(float(power_str))
         return web.Response()
 
-class Sensor:
+    async def postOnOff(self, request):
+        self.state = request.match_info['state']
+        if self.state == 'off':
+            self.updatePower(0.0)
+        elif self.state == 'on':
+            self.updatePower(100.0)
+            
+        return web.Response(text=self.state)
+
+class Sensor(Runnable):
     def __init__(self, sensorId):
         self.sensorId = sensorId
         self.lastTemp = 0.0
 
+    async def run(self, app):
+        while True:
+            self.lastTemp = await self.readTemp()
+            await asyncio.sleep(2)
 
-    async def pollTempLoop(self):
-        self.lastTemp = await self.get_temp()
-        await asyncio.sleep(2)
-
-
-    async def get_temp(self):
+    async def readTemp(self):
 #        await asyncio.sleep(2)
 #        return 24.0
         async with aiofiles.open('/sys/bus/w1/devices/%s/w1_slave'% self.sensorId, mode='r') as sensor_file:
@@ -122,13 +132,13 @@ class Sensor:
     def get(self, request):
         return web.Response(text="%f"%self.lastTemp)
 
-class Controller:
+class Controller(Runnable):
     def __init__(self, sensor, actor):
         self.state = 'off'
         self.sensor = sensor
         self.actor = actor
         self.targetTemp = 0.0
-        self.pid = PIDArduino(10, 50, 0.5, 10, 0, 100)
+        self.pid = PIDArduino(10, 50, 2, 10, 0, 100)
 
     async def getState(self, request):
         return web.Response(text=self.state)
@@ -147,33 +157,24 @@ class Controller:
     async def getTemp(self, request):
         return web.Response(text=str(self.targetTemp))
 
-    async def run(self):
-        if self.state == 'on':
-            output = self.pid.calc(self.sensor.lastTemp, self.targetTemp)
-            self.actor.updatePower(output)
-            await asyncio.sleep(1)
-        else:
-            self.actor.updatePower(0)
-            await asyncio.sleep(1)
+    async def run(self, app):
+        while True:
+            if self.state == 'on':
+                output = self.pid.calc(self.sensor.lastTemp, self.targetTemp)
+                self.actor.updatePower(output)
+                await asyncio.sleep(1)
+            else:
+                self.actor.updatePower(0)
+                await asyncio.sleep(1)
 
 sensor = Sensor("28-000004b8240b") 
-heater = Heater()
-ctrl=Controller(sensor, heater)
-
-async def controller_runner(app):
-    while True:
-        await ctrl.run()
-
-async def temp_poller(app):
-    while True:
-        tic = time.time()
-        await sensor.pollTempLoop()
-        toc = time.time()-tic
-        print("sensor poll delay %f"%toc)
+heater = Actor(pin=18)
+pump = Actor(pin=17)
+ctrl = Controller(sensor, heater)
 
 async def start_background_tasks(app):
-    app['controller_runner'] = app.loop.create_task(controller_runner(app))
-    app['temp_poller'] = app.loop.create_task(temp_poller(app))
+    app['controller_runner'] = app.loop.create_task(ctrl.run(app))
+    app['temp_poller'] = app.loop.create_task(sensor.run(app))
 
 async def cleanup_background_tasks(app):
     app['controller_runner'].cancel()
@@ -189,11 +190,12 @@ app.on_startup.append(start_background_tasks)
 app.on_cleanup.append(cleanup_background_tasks)
 
 app.router.add_get('/sensor', sensor.get)
-app.router.add_routes([web.get('/heater', heater.get), web.post('/heater', heater.post)])
+app.router.add_routes([web.get('/heater', heater.get), web.post('/heater', heater.postPower)])
 app.router.add_get('/controller', ctrl.getState)
 app.router.add_post('/controller/target', ctrl.postTemp)
 app.router.add_get('/controller/target', ctrl.getTemp)
 app.router.add_post('/controller/{state}',ctrl.postState)
+app.router.add_post('/pump/{state}', pump.postOnOff)
 app.router.add_get('/',index)
 
 

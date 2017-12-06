@@ -6,37 +6,48 @@
 <div ng-app="tfbrew" ng-controller="tfbrewCtrl">
     <p>Target temp: <input type="number" ng-model="targetTemp"/> <button class="btn btn-primary" ng-click="submitTargetTemp()">Update</button></p>
     <p>Actual temp: {{actualTemp}} C</p>
-    <p>Controller Enabled: <button class="btn btn-info" ng-class="{'active': state === true}" ng-click="changeState()">{{state}}</button></p>
-    <p>Controller power: {{power}}</p>
+    <p>Controller Enabled: <button class="btn btn-info" ng-class="{'active': controllerState === true}" ng-click="toggleController()">{{controllerState}}</button> Controller power: {{power}}</p>
+    <p><button class="btn btn-info" ng-class="{'active': pumpState === true}" ng-click="togglePump()">{{pumpState}}</button></button></p> 
 </div>
 
 <script>
     var app = angular.module('tfbrew', []);
     app.controller('tfbrewCtrl', function($scope, $http, $interval) {
-        $scope.state = false;
+        $scope.controllerState = false;
+        $scope.pumpState = false;
         $http.get("/controller")
                 .then(function(response) {
                     if(response.data == 'off') {
-                        $scope.state = false;
-                    }
+                        $scope.controllerState = false;
+                    } 
                     else if (response.data == 'on') {
-                        $scope.state = true;
-                    }
+                        $scope.controllerState = true;
+                    } 
         });
         $http.get("/controller/target")
                 .then(function(response) {
                     $scope.targetTemp = response.data;
         });
 
-        $scope.changeState = function() {
-            if ($scope.state === true) {
+        $scope.toggleController = function() {
+            if ($scope.controllerState === true) {
                 $http.post("/controller/off","")
             }
             else {
                 $http.post("/controller/on","")
             }
-            $scope.state = !$scope.state;
-        }
+            $scope.controllerState = !$scope.controllerState;
+        } 
+        $scope.togglePump = function() {
+            if ($scope.pumpState === true) {
+                $http.post("/pump/off","")
+            }
+            else {
+                $http.post("/pump/on","")
+            }
+            $scope.pumpState = !$scope.pumpState;
+        } 
+
         $scope.submitTargetTemp = function() {
             $http.post("/controller/target",$scope.targetTemp.toString());
         }
