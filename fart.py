@@ -2,9 +2,12 @@ import asyncio
 import aiofiles
 from aiohttp import web
 import time
-import RPi.GPIO as GPIO
-GPIO.setmode(GPIO.BCM)
-print("Setting BCM mode")
+import sys
+import os
+from ruamel.yaml import YAML
+# import RPi.GPIO as GPIO
+# GPIO.setmode(GPIO.BCM)
+# print("Setting BCM mode")
 
 class PIDArduino(object):
 
@@ -78,17 +81,18 @@ class Runnable:
         pass
 
 class Actor:
-    def __init__(self, pin=18):
+    def __init__(self, name, pin, pwmFrequency):
+        self.name = name
         self.power = 0.0
         self.pin = pin
-        self.frequency = 2.0
-        GPIO.setup(self.pin, GPIO.OUT)
-        self.p = GPIO.PWM(self.pin, self.frequency)
-        self.p.start(self.power)
+        self.frequency = pwmFrequency
+#        GPIO.setup(self.pin, GPIO.OUT)
+#        self.p = GPIO.PWM(self.pin, self.frequency)
+#        self.p.start(self.power)
 
     def updatePower(self, power):
         self.power = power
-        self.p.ChangeDutyCycle(self.power)
+ #       self.p.ChangeDutyCycle(self.power)
 
     async def get(self, request):
         return web.Response(text="%f"%self.power)
@@ -108,25 +112,27 @@ class Actor:
         return web.Response(text=self.state)
 
 class Sensor(Runnable):
-    def __init__(self, sensorId):
+    def __init__(self, name, sensorId, offset=0):
+        self.name = name
         self.sensorId = sensorId
+        self.offset = offset
         self.lastTemp = 0.0
 
     async def run(self, app):
         while True:
-            self.lastTemp = await self.readTemp()
+            self.lastTemp = await self.readTemp() + self.offset
             await asyncio.sleep(2)
 
     async def readTemp(self):
-#        await asyncio.sleep(2)
-#        return 24.0
-        async with aiofiles.open('/sys/bus/w1/devices/%s/w1_slave'% self.sensorId, mode='r') as sensor_file:
-            contents = await sensor_file.read()
-        if (contents.split('\n')[0].split(' ')[11] == "YES"):
-            temp = float(contents.split("=")[-1]) / 1000
-            return temp
-        else:
-            return -100
+       await asyncio.sleep(2)
+       return 24.0
+        # async with aiofiles.open('/sys/bus/w1/devices/%s/w1_slave'% self.sensorId, mode='r') as sensor_file:
+        #     contents = await sensor_file.read()
+        # if (contents.split('\n')[0].split(' ')[11] == "YES"):
+        #     temp = float(contents.split("=")[-1]) / 1000
+        #     return temp
+        # else:
+        #     return -100
 
 
     def get(self, request):
@@ -167,23 +173,43 @@ class Controller(Runnable):
                 self.actor.updatePower(0)
                 await asyncio.sleep(1)
 
-sensor = Sensor("28-000004b8240b") 
-heater = Actor(pin=18)
-pump = Actor(pin=17)
+#sensor = Sensor("28-000004b8240b") 
+#heater = Actor(pin=18)
+#pump = Actor(pin=17)
+
+async def index(request):
+    return web.FileResponse('index.html')
+
+sensors = {}
+actors = {}
+
+yaml = YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
+config = yaml.load(open('config.yaml',mode='r'))
+for sensor in config['sensors']:
+    for name, attribs in sensor.items():
+        sensors[name] = Sensor(name, attribs['id'], attribs['offset'])
+for actor in config['actors']:
+    for name, attribs in actor.items():
+        actors[name] = Actor(name, attribs['gpio'], attribs['pwmFrequency'])
+
+sensor = sensors['RecircTemp']
+heater = actors['Heater']
+pump = actors['Pump']
+
 ctrl = Controller(sensor, heater)
 
 async def start_background_tasks(app):
     app['controller_runner'] = app.loop.create_task(ctrl.run(app))
-    app['temp_poller'] = app.loop.create_task(sensor.run(app))
+    for name, sensor in sensors.items():
+        app[name] = app.loop.create_task(sensor.run(app))
 
 async def cleanup_background_tasks(app):
+    for name, sensor in sensors.items():
+        app[name].cancel()
+        await app[name]
+    
     app['controller_runner'].cancel()
-    app['temp_poller'].cancel()
     await app['controller_runner']
-    await app['temp_poller']
-
-async def index(request):
-    return web.FileResponse('index.html')
 
 app = web.Application()
 app.on_startup.append(start_background_tasks)
