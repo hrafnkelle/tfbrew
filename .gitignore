@@ -3,3 +3,5 @@ Include
 Lib
 Scripts
 tcl
+*.pyc
+__pycache__
