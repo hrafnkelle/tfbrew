@@ -1,4 +1,5 @@
 from interfaces import Actor
+from event import notify, Event
 
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
@@ -20,6 +21,7 @@ class GPIOActor(Actor):
     def updatePower(self, power):
         self.power = power
         self.p.ChangeDutyCycle(self.power)
+        notify(Event(source=self.name, endpoint='power', data=power))
 
     def on(self):
         self.updatePower(100.0)

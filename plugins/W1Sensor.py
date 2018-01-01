@@ -1,7 +1,7 @@
-from interfaces import Sensor
 import aiofiles
 import asyncio
-from aiohttp import web
+from interfaces import Sensor
+from event import notify, Event
 
 def factory(name, settings):
     return W1Sensor(name, settings['id'], settings['offset'])
@@ -15,9 +15,10 @@ class W1Sensor(Sensor):
         asyncio.get_event_loop().create_task(self.run())
 
 
-    async def run(self, app):
+    async def run(self):
         while True:
             self.lastTemp = await self.readTemp() + self.offset
+            notify(Event(source=self.name, endpoint='temperature', data=self.lastTemp))
             await asyncio.sleep(2)
 
     async def readTemp(self):
