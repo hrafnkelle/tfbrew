@@ -29,7 +29,8 @@ The following components are available
 + TPLinkActor - for controlling a TPLink WiFi socket
 + DummyActor - simulating an actor, just prints out the actions
 + BlynkLib - for communicating with a Blynk frontend
-+ PIDLogic - for temperature control with PID
++ PIDLogic - for precise temperature control with a PID (e.g. recirculated mash)
++ HysteresisLogic - for on/off temperature control with a hysteresis (e.g. fermentation fridge control)
 
 Configuration
 =============
@@ -41,13 +42,14 @@ This could be controlled by a Blynk user interface.
 See the included config.yaml as an example.
 
 First, actors and sensors are declared.
-Then, one or more controller is declared, a logic (how do decide when to activate e.g. heater), a sensor and an actor is attached.
+Then, one or more controller is declared, a logic (how do decide when to activate e.g. heater), a sensor and an actor are attached.
 Extensions can then be loaded.
 Finally, message routing is set up in connections.
 Each component has one or more sending and receving endpoint.
 Messages from one component to another are set up like
+```
 KettleController.power=>UserInterface.powerdisplay
-
+```
 Installation
 ============
 TFBrew requires at least Python 3.5 (for asyncio async/await support)
@@ -59,4 +61,4 @@ You will need to install the following python packages (pip install into your vi
 + RPi.GPIO
 + ruamel.yaml
 
-then run the tfbrew.py file 
+then run the tfbrew.py file

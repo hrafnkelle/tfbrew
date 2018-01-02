@@ -1,6 +1,13 @@
 """
 PID Control for the masses
 """
+# This code is based on the Arduino-PID-Library 
+# https://github.com/br3ttb/Arduino-PID-Library
+#
+# The original PID Arduino library was written by Brett Beauregard <br3ttb@gmail.com> brettbeauregard.com
+# which is licensed under the MIT license
+#
+
 import time
 from interfaces import Logic
 
