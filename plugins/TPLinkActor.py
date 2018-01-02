@@ -81,23 +81,32 @@ class TPLinkActor(Actor):
         transport.write(encrypt(bytes(msg,'ascii')))
 
     def on(self):
+        print("Turning %s on"%self.name)
         asyncio.ensure_future(self.send(self.onMsg))
         self.updatePower(100.0)
 
     def off(self):
+        print("Turning %s off"%self.name)
         asyncio.ensure_future(self.send(self.offMsg))
         self.updatePower(0.0)
 
     def callback(self, endpoint, data):
         if endpoint == 'state':
             if data == 0:
-                print("Turning %s off"%self.name)
                 self.off()
             elif data == 1:
-                print("Turning %s on"%self.name)
                 self.on()
             else:
-                print("Warning: TPLinkActor:%s unsupported data value: %d"%(self.name, data))
+                print("Warning: TPLinkActor:%s unsupported data value for state endpoint: %d"%(self.name, data))
+        elif endpoint == 'power':
+            if data == 100.0:
+                self.on()
+            elif data == 0.0:
+                self.off()
+            else:
+                self.updatePower(data)
+        else:
+            print("Warning: TPLinkActor: %s unsupported endpoint %s"%(self.name, endpoint))
 
 if __name__ == '__main__':
 
