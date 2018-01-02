@@ -4,9 +4,9 @@ import interfaces
 import event
 
 class Controller(interfaces.Component, interfaces.Runnable):
-    def __init__(self, name, sensor, actor, logic, targetTemp=0.0):
+    def __init__(self, name, sensor, actor, logic, targetTemp=0.0, initialState='off'):
         self.name = name
-        self.state = 'off'
+        self.state = initialState
         self.sensor = sensor
         self.actor = actor
         self.targetTemp = targetTemp

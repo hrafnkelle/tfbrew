@@ -35,8 +35,9 @@ for ctrl in config['controllers']:
         logic = logicPlugin.factory(name, attribs['logicCoeffs'])
         sensor = components[attribs['sensor']]
         actor = components[attribs['actor']]
-        initialSetpoint = attribs['initialSetpoint']
-        components[name] = controller.Controller(name, sensor, actor, logic, initialSetpoint)
+        initialSetpoint = attribs.get('initialSetpoint', 67.0)
+        initialState = 'on' if attribs.get('initialState', False) else 'off'
+        components[name] = controller.Controller(name, sensor, actor, logic, initialSetpoint, initialState)
         print("setting up %s"%name)
 
 
