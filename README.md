@@ -1,0 +1,55 @@
+About
+=====
+
+TFBrew is yet-another homebrewing for (but not limited to) the Raspberry Pi.
+
+It aims to be a flexible, modular system allowing the user to configure it to different setups
+of homebrewing equipment.
+
+It is configured throug a YAML configuration file, found in config.yaml.
+The included configuration might work for a single vessel BIAB system controlled by a Raspberry Pi,
+using GPIO for actors and a one-wire (w1) ds18b20 (or similar) temperature sensor.
+This could be controlled by a Blynk user interface.
+
+TFBrew was written by Hrafnkell Eiríksson - <he@klaki.net>
+
+TFBrew is Copyright from 2017 by Hrafnkell Eiríksson and is licensed by the GNU GPL v3 license.
+See the LICENSE file.
+
+Plugins
+=======
+TFBrew is based around the idea of components that send each other messages. Components are implemented through plugins.
+The following components are available
+
++ W1Sensor - for using one-wire sensors like the ds18b20
++ DummySensor - simulating a sensor with a configurable value + noise
++ GPIOActor - for controlling relays (SSR) with the GPIO pins on the Raspberry Pi
++ TPLinkActor - for controlling a TPLink WiFi socket
++ DummyActor - simulating an actor, just prints out the actions
++ BlynkLib - for communicating with a Blynk frontend
++ PIDLogic - for temperature control with PID
+
+Configuration
+=============
+See the included config.yaml as an example.
+
+First, actors and sensors are declared.
+Then, one or more controller is declared, a logic (how do decide when to activate e.g. heater), a sensor and an actor is attached.
+Extensions can then be loaded.
+Finally, message routing is set up in connections.
+Each component has one or more sending and receving endpoint.
+Messages from one component to another are set up like
+KettleController.power=>UserInterface.powerdisplay
+
+Installation
+============
+TFBrew requires at least Python 3.5 (for asyncio async/await support)
+
+Clone this repository, and set up a virtualenv
+You will need to install the following python packages (pip install into your virtualenv)
+aiofiles
+aiohttp
+RPi.GPIO
+ruamel.yaml
+
+then run the tfbrew.py file 

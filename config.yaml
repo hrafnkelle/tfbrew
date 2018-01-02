@@ -1,18 +1,50 @@
 sensors:
-  - RecircTemp: 
+  - RecircTemp:
+      plugin: W1Sensor 
       id: 28-000004b8240b
       offset: 1.2
+#  - RecircTemp:
+#      plugin: DummySensor 
+#      fakeTemp: 66
 
 actors:
   - Heater:
+      plugin: GPIOActor
       gpio: 18
       pwmFrequency: 2
+#  - Heater:
+#      plugin: DummyActor
   - Pump:
+      plugin: GPIOActor
       gpio: 17
       pwmFrequency: 2
+#  - Pump:
+#      plugin: TPLinkActor
+#      ip: 192.168.1.65      
 
-control:
-  agitator: Pump
-  heater: Heater
-  sensor: RecircTemp
-  logic: pid
+
+controllers:
+  - KettleController:
+      plugin: PIDLogic
+      logicCoeffs:
+        p: 50
+        i: 2
+        d: 10 
+      actor: Heater
+      sensor: RecircTemp
+      initialSetpoint: 67
+
+extensions:
+  - blynk:
+      plugin: BlynkLib
+      server: blynk-cloud.com
+      port: 8442
+      token: <insert your token here>
+
+connections:
+  - blynk.v1=>KettleController.state
+  - Heater.power=>blynk.v2
+  - RecircTemp.temperature=>blynk.v3
+  - blynk.v5=>KettleController.setpoint
+  - KettleController.setpoint=>blynk.v4
+  - blynk.v6=>Pump.state
