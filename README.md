@@ -1,15 +1,17 @@
 About
 =====
 
-TFBrew is yet-another homebrewing for (but not limited to) the Raspberry Pi.
+TFBrew is yet another beer homebrewing control system for (but not limited to) the Raspberry Pi.
+
+You can use it to:
++ Monitor the temperature in your mash kettle or hot liqure tank using the W1Sensor plugin.
++ Turn heaters and pumps on and off using the GPIOActor (raspberry pi) or the TPLinkActor (WiFi controlled socket).
++ Maintain a stable temperature in your mash by combining a heater and temperature sensor in a controller
+  with process logic (the PIDLogic plugin).
++ Control and monitor your brewing process through a mobile device, e.g. with a [Blynk](http://www.blynk.cc) frontend.
 
 It aims to be a flexible, modular system allowing the user to configure it to different setups
 of homebrewing equipment.
-
-It is configured throug a YAML configuration file, found in config.yaml.
-The included configuration might work for a single vessel BIAB system controlled by a Raspberry Pi,
-using GPIO for actors and a one-wire (w1) ds18b20 (or similar) temperature sensor.
-This could be controlled by a Blynk user interface.
 
 TFBrew was written by Hrafnkell Eiríksson - <he@klaki.net>
 
@@ -31,6 +33,11 @@ The following components are available
 
 Configuration
 =============
+
+It is configured throug a YAML configuration file, found in config.yaml.
+The included configuration might work for a single vessel BIAB system controlled by a Raspberry Pi,
+using GPIO for actors and a one-wire (w1) ds18b20 (or similar) temperature sensor.
+This could be controlled by a Blynk user interface.
 See the included config.yaml as an example.
 
 First, actors and sensors are declared.
@@ -47,9 +54,9 @@ TFBrew requires at least Python 3.5 (for asyncio async/await support)
 
 Clone this repository, and set up a virtualenv
 You will need to install the following python packages (pip install into your virtualenv)
-aiofiles
-aiohttp
-RPi.GPIO
-ruamel.yaml
++ aiofiles
++ aiohttp
++ RPi.GPIO
++ ruamel.yaml
 
 then run the tfbrew.py file 
