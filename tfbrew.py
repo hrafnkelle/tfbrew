@@ -2,6 +2,7 @@
 Backend for a yet another brewing application controlled by a Blynk frontend
 """
 
+import sys, os
 import importlib
 import logging
 
@@ -14,6 +15,9 @@ import controller
 import event
 
 logging.basicConfig(level=logging.DEBUG)
+
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "plugins"))
 
 app = web.Application()
 
