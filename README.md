@@ -24,13 +24,15 @@ TFBrew is based around the idea of components that send each other messages. Com
 The following components are available
 
 + W1Sensor - for using one-wire sensors like the ds18b20
++ TiltSensor - for using the Tilt Hydrometer
 + DummySensor - simulating a sensor with a configurable value + noise
 + GPIOActor - for controlling relays (SSR) with the GPIO pins on the Raspberry Pi
 + TPLinkActor - for controlling a TPLink WiFi socket
 + DummyActor - simulating an actor, just prints out the actions
-+ BlynkLib - for communicating with a Blynk frontend
 + PIDLogic - for precise temperature control with a PID (e.g. recirculated mash)
 + HysteresisLogic - for on/off temperature control with a hysteresis (e.g. fermentation fridge control)
++ BlynkLib - for communicating with a Blynk frontend
++ SimpleWebView - for viewing the state of sensors, actors, etc in a web browser
 
 Configuration
 =============
@@ -60,5 +62,6 @@ You will need to install the following python packages (pip install into your vi
 + aiohttp
 + RPi.GPIO
 + ruamel.yaml
++ pybluez
 
 then run the tfbrew.py file

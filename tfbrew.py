@@ -13,17 +13,12 @@ from ruamel.yaml import YAML
 import interfaces
 import controller
 import event
+from common import app, components
 
 logging.basicConfig(level=logging.DEBUG)
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "plugins"))
-
-app = web.Application()
-
-
-components = {}
-controllers = {}
 
 yaml = YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
 config = yaml.load(open('config.yaml',mode='r'))
