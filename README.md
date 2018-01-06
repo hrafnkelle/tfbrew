@@ -18,6 +18,8 @@ TFBrew was written by Hrafnkell Eiríksson - <he@klaki.net>
 TFBrew is Copyright from 2017 by Hrafnkell Eiríksson and is licensed by the GNU GPL v3 license.
 See the LICENSE file.
 
+Please see our [Wiki](https://github.com/hrafnkelle/tfbrew/wiki)
+
 Plugins
 =======
 TFBrew is based around the idea of components that send each other messages. Components are implemented through plugins.
