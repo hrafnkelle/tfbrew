@@ -2,10 +2,14 @@
 Implements using a TPLink socket as an actor
 """
 import asyncio
+import logging
+
 from aiohttp import web
 
 from interfaces import Actor
 from event import notify, Event
+
+logger = logging.getLogger(__name__)
 
 def factory(name, settings):
     return TPLinkActor(name, settings)
@@ -38,6 +42,10 @@ class TPLinkProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
         #print("connected")
+
+    def connection_lost(self, exc):
+        if exc:
+            logger.error(exc)
 
     def data_received(self, data):
         msg = decrypt(data[4:])
@@ -97,7 +105,7 @@ class TPLinkActor(Actor):
             elif data == 1:
                 self.on()
             else:
-                print("Warning: TPLinkActor:%s unsupported data value for state endpoint: %d"%(self.name, data))
+                logger.warning("TPLinkActor:%s unsupported data value for state endpoint: %d"%(self.name, data))
         elif endpoint == 'power':
             if data == 100.0:
                 self.on()
@@ -106,7 +114,7 @@ class TPLinkActor(Actor):
             else:
                 self.updatePower(data)
         else:
-            print("Warning: TPLinkActor: %s unsupported endpoint %s"%(self.name, endpoint))
+            logger.warning("TPLinkActor: %s unsupported endpoint %s"%(self.name, endpoint))
 
 if __name__ == '__main__':
 

@@ -22,9 +22,12 @@ import asyncio
 import struct
 import time
 import sys
+import logging
 
 import interfaces
 from event import notify, Event
+
+logger = logging.getLogger(__name__)
 
 def factory(name, settings):
     component = BlynkComponent(name, settings['token'])
@@ -126,9 +129,9 @@ class BlynkProtocol(asyncio.Protocol):
         self.transport.close()
         self.state = DISCONNECTED
         # time.sleep(RECONNECT_DELAY)
-        print("closing blynk for some reason")
+        logger.warning("closing blynk for some reason")
         if emsg:
-            print('Error: %s, connection closed' % emsg)
+            logger.warning('Error: %s, connection closed' % emsg)
 
     def _handle_hw(self, data):
         params = list(map(lambda x: x.decode('ascii'), data.split(b'\0')))
@@ -171,7 +174,7 @@ class BlynkProtocol(asyncio.Protocol):
 
 
     def connection_made(self, transport):
-        print("connection_made")
+        logger.info("connection_made")
         self.transport = transport
         hdr = struct.pack(HDR_FMT, MSG_LOGIN, self._new_msg_id(), len(self.token))
         self._send(hdr+self.token.encode('ascii'))
@@ -197,18 +200,18 @@ class BlynkProtocol(asyncio.Protocol):
         
         if self.state == AUTHENTICATING:
             if status != STA_SUCCESS or msg_id == 0:
-                print('Blynk authentication failed')
+                logger.warning('Blynk authentication failed')
                 return
 
             self.state = AUTHENTICATED
             self._send(self._format_msg(MSG_HW_INFO, 'ver', '0.0.1+py', 'h-beat', HB_PERIOD, 'dev', sys.platform))
-            print('Access granted, happy Blynking!')
+            logger.info('Access granted, happy Blynking!')
             #self.sync_all()
         elif self.state == AUTHENTICATED:
             msg_len = status
             if msg_id == 0:
                 self.transport.close()
-                print('invalid msg id %d' % msg_id)
+                logger.warning('invalid msg id %d' % msg_id)
                 return
             if msg_type == MSG_RSP:
                 if msg_id == self._last_hb_id:
@@ -220,13 +223,14 @@ class BlynkProtocol(asyncio.Protocol):
                 if data:
                     self._handle_hw(data)
             else:
-                print('unknown message type %d' % msg_type)
+                logger.warning('unknown message type %d' % msg_type)
                 #self._close('unknown message type %d' % msg_type)
                 return
 
 
     def connection_lost(self, exc):
-        pass
+        if exc:
+            logger.error(exc)
 
     def VIRTUAL_READ(blynk, pin):
         class Decorator():
@@ -257,7 +261,7 @@ class BlynkComponent(interfaces.Component):
         notify(Event(source=self.name, endpoint='v%d'%pin, data=float(params.pop(0))))
 
     def readRequest(self, pin, params):
-        print("Read request for v%d: %s"%(pin, str(params)))
+        logger.info("Read request for v%d: %s"%(pin, str(params)))
 
     def callback(self, endpoint, data):
         pinNr = int(endpoint[1])

@@ -15,8 +15,12 @@ import controller
 import event
 from common import app, components
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, filename='tfbrew.log')
+logger = logging.getLogger(__name__)
 
+console = logging.StreamHandler()
+console.setLevel(logging.DEBUG)
+logging.getLogger('').addHandler(console)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "plugins"))
 
@@ -25,11 +29,12 @@ config = yaml.load(open('config.yaml',mode='r'))
 for componentType in ['sensors', 'actors', 'extensions']:
     for sensor in config[componentType]:
         for name, attribs in sensor.items():
-            print("setting up %s"%name)
+            logging.info("setting up %s"%name)
             plugin = importlib.import_module('plugins.%s'%attribs['plugin'])
             components[name] = plugin.factory(name, attribs)
 for ctrl in config['controllers']:
     for name, attribs in ctrl.items():
+        logger.info("setting up %s"%name)
         logicPlugin = importlib.import_module('plugins.%s'%attribs['plugin'])
         logic = logicPlugin.factory(name, attribs['logicCoeffs'])
         sensor = components[attribs['sensor']]
@@ -37,14 +42,13 @@ for ctrl in config['controllers']:
         initialSetpoint = attribs.get('initialSetpoint', 67.0)
         initialState = 'on' if attribs.get('initialState', False) else 'off'
         components[name] = controller.Controller(name, sensor, actor, logic, initialSetpoint, initialState)
-        print("setting up %s"%name)
 
 
 for conn in config['connections']:
     (sendEvent, recvEvent) = conn.split('=>')
     (sendComponent, sendType) = sendEvent.split('.')
     (recvComponent, recvType) = recvEvent.split('.')
-    print("About to register %s to %s type %s"%(sendComponent, recvComponent, recvType))
+    logger.debug("About to register %s to %s type %s"%(sendComponent, recvComponent, recvType))
     event.register(sendEvent, lambda event, rc=recvComponent, rt=recvType: components[rc].callback(rt, event))
 
 async def start_background_tasks(app):

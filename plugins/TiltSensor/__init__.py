@@ -2,6 +2,7 @@ import asyncio
 import sys
 import datetime
 import time
+import logging
 
 import bluetooth._bluetooth as bluez
 
@@ -9,6 +10,8 @@ import TiltSensor.blescan as blescan
 
 import interfaces
 from event import notify, Event
+
+logger = logging.getLogger(__name__)
 
 def factory(name, settings):
    return TiltSensor(name)
@@ -49,11 +52,11 @@ class TiltSensor(interfaces.Sensor):
        self.dev_id = 0
        try:
            self.sock = bluez.hci_open_dev(self.dev_id)
-           print('Starting pytilt logger')
+           logger.info('Starting pytilt logger')
            blescan.hci_le_set_scan_parameters(self.sock)
            blescan.hci_enable_le_scan(self.sock)
        except:
-           print('error accessing bluetooth device...')
+           logger.error('error accessing bluetooth device...')
 
        asyncio.get_event_loop().create_task(self.run())
 
@@ -76,5 +79,5 @@ class TiltSensor(interfaces.Sensor):
 #                         'gravity': beacon['minor']
 #                     })
                     return (to_celsius(beacon['major']), beacon['minor'])
-            print("INFO: Nothing found from bluetooth")
+            logger.info("Nothing found from bluetooth")
     

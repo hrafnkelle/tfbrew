@@ -1,7 +1,10 @@
 import asyncio
+import logging
 
 import interfaces
 import event
+
+logger = logging.getLogger(__name__)
 
 class Controller(interfaces.Component, interfaces.Runnable):
     def __init__(self, name, sensor, actor, logic, targetTemp=0.0, initialState='off'):
@@ -16,17 +19,17 @@ class Controller(interfaces.Component, interfaces.Runnable):
     def callback(self, endpoint, data):
         if endpoint == 'state':
             if data == 0:
-                print("Turning %s ctrl off"%self.name)
+                logger.info("Turning %s ctrl off"%self.name)
                 self.setState('off')
             elif data == 1:
-                print("Turning %s ctrl on"%self.name)
+                logger.info("Turning %s ctrl on"%self.name)
                 self.setState('on')
             else:
-                print("Warning: Controller unsupported data value: %f"%data)
+                logger.warning("Controller unsupported data value: %f"%data)
         elif endpoint == 'setpoint':
             self.setSetpoint(float(data))
         else:
-            print("Warning: Unknown type/endpoint for Contorller %s"%endpoint)
+            logger.warning("Unknown type/endpoint for Contorller %s"%endpoint)
 
     def setSetpoint(self, setpoint):
         self.targetTemp = setpoint

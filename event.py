@@ -1,5 +1,8 @@
 import asyncio
+import logging
 from collections import namedtuple
+
+logger = logging.getLogger(__name__)
 
 Event = namedtuple('Event',['source','endpoint','data'])
 
@@ -14,7 +17,7 @@ def register(eventName, callback):
     observers.setdefault(eventName, []).append(callback)
 
 def notify(event):
-    print("notify %s"%str(event))
+    logger.debug("notify %s"%str(event))
     if event.name() in observers:
         for observer in observers[event.name()]:
             if asyncio.iscoroutinefunction(observer):

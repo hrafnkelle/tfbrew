@@ -5,3 +5,4 @@ Scripts
 tcl
 *.pyc
 __pycache__
+*.log

@@ -1,6 +1,10 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 class Component:
     def callback(self, type, data):
-        print("Not handled event: %s"%str(data))
+        logger.debug("Not handled event: %s"%str(data))
         pass
 
 class Runnable:
