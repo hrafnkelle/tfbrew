@@ -114,7 +114,10 @@ class BlynkProtocol(asyncio.Protocol):
         return struct.pack(HDR_FMT, msg_type, self._new_msg_id(), len(data)) + data
 
     def _send(self, data, send_anyway=False):
-        self.transport.write(data)
+        try:
+            self.transport.write(data)
+        except:
+            logger.exception("Blynk failed to write to transport")
 
 
     def _recv(self, length, timeout=0):
