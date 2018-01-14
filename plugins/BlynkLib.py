@@ -232,8 +232,9 @@ class BlynkProtocol(asyncio.Protocol):
 
 
     def connection_lost(self, exc):
+        logger.warning("Blink got connection lost")
         if exc:
-            logger.error(exc)
+            logger.exception(exc)
 
     def VIRTUAL_READ(blynk, pin):
         class Decorator():

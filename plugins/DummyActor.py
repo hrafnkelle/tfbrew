@@ -1,5 +1,9 @@
+import logging
+
 from interfaces import Actor
 from event import notify, Event
+
+logger = logging.getLogger(__name__)
 
 def factory(name, settings):
     return DummyActor(name)
@@ -17,15 +21,15 @@ class DummyActor(Actor):
     def updatePower(self, power):
         self.power = power
         notify(Event(source=self.name, endpoint='power', data=self.power))
-        print("%s: Setting power to %f"%(self.name, self.power))
+        logger.debug("%s: Setting power to %f"%(self.name, self.power))
 
     def callback(self, endpoint, data):
         if endpoint == 'state':
             if data == 0:
-                print("Turning %s off"%self.name)
+                logger.info("Turning %s off"%self.name)
                 self.off()
             elif data == 1:
-                print("Turning %s on"%self.name)
+                logger.info("Turning %s on"%self.name)
                 self.on()
             else:
-                print("Warning: DummyActor:%s unsupported data value: %d"%(self.name, data))
+                logger.warning"DummyActor:%s unsupported data value: %d"%(self.name, data))

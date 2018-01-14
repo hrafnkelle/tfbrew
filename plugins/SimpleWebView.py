@@ -2,6 +2,7 @@ import asyncio
 import struct
 import time
 import sys
+import logging
 
 from aiohttp import web
 
@@ -10,8 +11,10 @@ from event import notify, Event
 
 from common import app
 
+logger = logging.getLogger(__name__)
+
 def factory(name, settings):
-    print("Initializing SimpleWebView")
+    logger.info("Initializing SimpleWebView")
     return SimpleWebView(name)
 
 class SimpleWebView(interfaces.Component):

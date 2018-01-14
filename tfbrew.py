@@ -15,11 +15,11 @@ import controller
 import event
 from common import app, components
 
-logging.basicConfig(level=logging.DEBUG, filename='tfbrew.log')
+logging.basicConfig(level=logging.DEBUG, filename='tfbrew.log', filemode='w')
 logger = logging.getLogger(__name__)
 
 console = logging.StreamHandler()
-console.setLevel(logging.DEBUG)
+console.setLevel(logging.WARNING)
 logging.getLogger('').addHandler(console)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "plugins"))

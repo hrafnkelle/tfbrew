@@ -85,8 +85,12 @@ class TPLinkActor(Actor):
         notify(Event(source=self.name, endpoint='power', data=power))
 
     async def send(self, msg):
-        (transport, protocol) = await self.loop.create_connection(lambda: self.protocol, self.settings['ip'], 9999)
-        transport.write(encrypt(bytes(msg,'ascii')))
+        try:
+            (transport, protocol) = await self.loop.create_connection(lambda: self.protocol, self.settings['ip'], 9999)
+            transport.write(encrypt(bytes(msg,'ascii')))
+        except OSError as e:
+            logger.warning("Timeout sending to TPLinkActor %s"%self.name)
+            logger.exception(e)
 
     def on(self):
         print("Turning %s on"%self.name)
