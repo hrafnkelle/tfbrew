@@ -35,6 +35,7 @@ The following components are available
 + HysteresisLogic - for on/off temperature control with a hysteresis (e.g. fermentation fridge control)
 + BlynkLib - for communicating with a Blynk frontend
 + SimpleWebView - for viewing the state of sensors, actors, etc in a web browser
++ Ubidots - for logging to the Ubidots IoT cloud
 
 Configuration
 =============
