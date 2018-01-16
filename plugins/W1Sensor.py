@@ -4,14 +4,18 @@ from interfaces import Sensor
 from event import notify, Event
 
 def factory(name, settings):
-    return W1Sensor(name, settings['id'], settings['offset'])
+    id = settings['id']
+    offset = settings.get('offset', 0.0)
+    pollInterval = settings.get('pollInterval', 2.0)
+    return W1Sensor(name, id, offset, pollInterval)
 
 class W1Sensor(Sensor):
-    def __init__(self, name, sensorId, offset=0):
+    def __init__(self, name, sensorId, offset=0, pollInterval=0):
         self.name = name
         self.sensorId = sensorId
         self.offset = offset
         self.lastTemp = 0.0
+        self.pollInterval = pollInterval
         asyncio.get_event_loop().create_task(self.run())
 
 
@@ -19,7 +23,7 @@ class W1Sensor(Sensor):
         while True:
             self.lastTemp = await self.readTemp() + self.offset
             notify(Event(source=self.name, endpoint='temperature', data=self.lastTemp))
-            await asyncio.sleep(2)
+            await asyncio.sleep(self.pollInterval)
 
     async def readTemp(self):
         async with aiofiles.open('/sys/bus/w1/devices/%s/w1_slave'% self.sensorId, mode='r') as sensor_file:
