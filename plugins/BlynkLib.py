@@ -30,12 +30,11 @@ from event import notify, Event
 logger = logging.getLogger(__name__)
 
 def factory(name, settings):
-    component = BlynkComponent(name, settings['token'])
     blynkServer = settings.get('server','blynk-cloud.com')
     blynkPort = settings.get('port', 8442)
-    coro = asyncio.get_event_loop().create_connection(lambda: component.blynk, blynkServer, blynkPort)
-    asyncio.ensure_future(coro)
+    component = BlynkComponent(name, blynkServer, blynkPort, settings['token'])
     return component
+
 
 epoch = time.time()
 
@@ -76,6 +75,7 @@ DISCONNECTED = const(0)
 CONNECTING = const(1)
 AUTHENTICATING = const(2)
 AUTHENTICATED = const(3)
+CLOSED = const(4)
 
 EAGAIN = const(11)
 
@@ -101,6 +101,8 @@ class BlynkProtocol(asyncio.Protocol):
     async def _heartbeat(self):
         while True:
             isOnline = self._server_alive()
+            if not isOnline:
+                logger.warning("server not online when sending heartbeat")
             await asyncio.sleep(HB_PERIOD)
 
     def _new_msg_id(self):
@@ -117,7 +119,7 @@ class BlynkProtocol(asyncio.Protocol):
         try:
             self.transport.write(data)
         except:
-            logger.exception("Blynk failed to write to transport")
+            logger.warning("Blynk failed to write to transport")
 
 
     def _recv(self, length, timeout=0):
@@ -130,7 +132,7 @@ class BlynkProtocol(asyncio.Protocol):
 
     def _close(self, emsg=None):
         self.transport.close()
-        self.state = DISCONNECTED
+        self.state = CLOSED
         # time.sleep(RECONNECT_DELAY)
         logger.warning("closing blynk for some reason")
         if emsg:
@@ -233,8 +235,11 @@ class BlynkProtocol(asyncio.Protocol):
 
     def connection_lost(self, exc):
         logger.warning("Blink got connection lost")
+        self.transport.close()
+        self.state = CLOSED
         if exc:
             logger.exception(exc)
+        self.component.run()
 
     def VIRTUAL_READ(blynk, pin):
         class Decorator():
@@ -257,10 +262,21 @@ class BlynkProtocol(asyncio.Protocol):
 
 
 class BlynkComponent(interfaces.Component):
-    def __init__(self, name, token):
+    def __init__(self, name, server, port, token):
         self.name = name
-        self.blynk = BlynkProtocol(token, self)
+        self.server = server
+        self.port = port
+        self.token = token
+        self.blynk = BlynkProtocol(self.token, self)
+        self.run()
 
+    async def asyncRun(self):
+        transport, protocol = await asyncio.get_event_loop().create_connection(lambda: self.blynk, self.server, self.port)
+        self.blynk = protocol
+
+    def run(self):
+       asyncio.ensure_future(self.asyncRun())
+ 
     def writeRequest(self, pin, params):
         notify(Event(source=self.name, endpoint='v%d'%pin, data=float(params.pop(0))))
 
