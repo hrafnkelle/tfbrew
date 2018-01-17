@@ -21,14 +21,14 @@ class UbidotsLogger(interfaces.Component):
         self.variables = variables
         self.loop = asyncio.get_event_loop()
 
-    def prepareVariables(self, variableNames):
-        for name, token in variableNames.items():
-            self.variables[name] = self.api.get_variable(token)
 
     async def postToUbidots(self, endpoint, data):
-        response = await self.session.post('http://things.ubidots.com/api/v1.6/variables/%s/values'%self.variables[endpoint],
-                            data=json.dumps({'value': data}), headers=self.headers)
-        
+        try:
+            response = await self.session.post('http://things.ubidots.com/api/v1.6/variables/%s/values'%self.variables[endpoint],
+                                data=json.dumps({'value': data}), headers=self.headers)
+        except (aiohttp.ClientConnectorError, aiohttp.ServerDisconnectedError) as e:
+            logger.warning("Failed to connect to ubidots %s"%str(e))
+
 
     def callback(self, endpoint, data):
         asyncio.ensure_future(self.postToUbidots(endpoint, data))
