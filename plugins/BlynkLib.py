@@ -87,16 +87,19 @@ class VrPin:
 class BlynkProtocol(asyncio.Protocol):
     def __init__(self, token, component):
         self.token = token
+        self._rx_data = b''
+        self._vr_pins = {}
+        self.component = component
+        self.transport = None
+        self.reset()
+        asyncio.ensure_future(self._heartbeat())
+
+    def reset(self):
         self._msg_id = 1
         self._last_hb_id = 0
         self.state = DISCONNECTED
-        self.transport = None
-        self._rx_data = b''
-        self._vr_pins = {}
         self._m_time = 0
         self._hb_time = 0
-        self.component = component
-        asyncio.ensure_future(self._heartbeat())
 
     async def _heartbeat(self):
         while True:
@@ -234,7 +237,7 @@ class BlynkProtocol(asyncio.Protocol):
 
 
     def connection_lost(self, exc):
-        logger.warning("Blink got connection lost")
+        logger.warning("Blynk got connection lost")
         self.transport.close()
         self.state = CLOSED
         if exc:
@@ -271,6 +274,7 @@ class BlynkComponent(interfaces.Component):
         self.run()
 
     async def asyncRun(self):
+        self.blynk.reset()
         transport, protocol = await asyncio.get_event_loop().create_connection(lambda: self.blynk, self.server, self.port)
         self.blynk = protocol
 
@@ -284,7 +288,7 @@ class BlynkComponent(interfaces.Component):
         logger.info("Read request for v%d: %s"%(pin, str(params)))
 
     def callback(self, endpoint, data):
-        pinNr = int(endpoint[1])
+        pinNr = int(endpoint[1:])
         #print("%s : %s"%(type,event))
         self.blynk.virtual_write(pinNr, data)
 
