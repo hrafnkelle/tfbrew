@@ -21,8 +21,11 @@ class W1Sensor(Sensor):
 
     async def run(self):
         while True:
-            self.lastTemp = await self.readTemp() + self.offset
-            notify(Event(source=self.name, endpoint='temperature', data=self.lastTemp))
+            try:
+                self.lastTemp = await self.readTemp() + self.offset
+                notify(Event(source=self.name, endpoint='temperature', data=self.lastTemp))
+            except RuntimeError as e:
+                logger.debug(str(e))
             await asyncio.sleep(self.pollInterval)
 
     async def readTemp(self):
@@ -32,7 +35,7 @@ class W1Sensor(Sensor):
             temp = float(contents.split("=")[-1]) / 1000
             return temp
         else:
-            return -100
+            raise RuntimeError("Failed to read W1 Temperature: %s"%contents)
 
     def temp(self):
         return self.lastTemp
