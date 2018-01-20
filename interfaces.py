@@ -34,6 +34,6 @@ class Actor(Component, Runnable):
         pass
 
 
-class Logic:
+class Logic(Component):
     def calc(self, input, setpoint):
         pass

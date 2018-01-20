@@ -1,8 +1,8 @@
 import interfaces
 
 def factory(name, settings):
-    hysteresisOver = settings.get('allowedOvershoot',0.5)
-    hysteresisUnder = settings.get('allowedUndershoot',0.5)
+    hysteresisOver = settings.get('allowedOvershoot', 0.5)
+    hysteresisUnder = settings.get('allowedUndershoot', 0.5)
     return HysteresisLogic(hysteresisOver, hysteresisUnder)
 
 class HysteresisLogic(interfaces.Logic):
@@ -12,17 +12,26 @@ class HysteresisLogic(interfaces.Logic):
         self.lastOutput = 0
         self.output = 0
 
+    def shouldCool(self, currentTemp, theshold):
+        if currentTemp >= threshold:
+            return 1
+        else:
+            return 0
+
+
     def calc(self, input, setpoint):
         if self.lastOutput == 1:
-            if input >= (setpoint - self.hysteresisUnder):
-                self.output = 1
-            else:
-                self.output = 0
+            self.output = self.shouldCool(input, setpoint - self.hysteresisUnder)
         else:
-            if input >= (setpoint + self.hysteresisOver):
-                self.output = 1
-            else:
-                self.output = 0
+            self.output = self.shouldCool(input, setpoint + self.hysteresisUnder)
 
         self.lastOutput = self.output
         return self.output*100.0
+
+    def callback(self, endpoint, data):
+        if endpoint == 'undershoot':
+            self.hysteresisUnder = float(data)
+        elif endpoint == 'overshoot':
+            self.hysteresisOver = float(data)
+        else:
+            super.callback(endpoint, data)

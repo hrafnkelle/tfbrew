@@ -29,7 +29,8 @@ class Controller(interfaces.Component, interfaces.Runnable):
         elif endpoint == 'setpoint':
             self.setSetpoint(float(data))
         else:
-            logger.warning("Unknown type/endpoint for Contorller %s"%endpoint)
+            self.logic.callback(endpoint, data)
+            #logger.warning("Unknown type/endpoint for Contorller %s"%endpoint)
 
     def setSetpoint(self, setpoint):
         self.targetTemp = setpoint
