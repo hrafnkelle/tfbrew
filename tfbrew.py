@@ -27,8 +27,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "plugins"))
 yaml = YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
 config = yaml.load(open('config.yaml',mode='r'))
 for componentType in ['sensors', 'actors', 'extensions']:
-    for sensor in config[componentType]:
-        for name, attribs in sensor.items():
+    for component in config[componentType]:
+        for name, attribs in component.items():
             logging.info("setting up %s"%name)
             plugin = importlib.import_module('plugins.%s'%attribs['plugin'])
             components[name] = plugin.factory(name, attribs)
