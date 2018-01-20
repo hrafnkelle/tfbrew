@@ -12,7 +12,7 @@ class HysteresisLogic(interfaces.Logic):
         self.lastOutput = 0
         self.output = 0
 
-    def shouldCool(self, currentTemp, theshold):
+    def shouldCool(self, currentTemp, threshold):
         if currentTemp >= threshold:
             return 1
         else:
