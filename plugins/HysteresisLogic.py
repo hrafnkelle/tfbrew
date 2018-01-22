@@ -23,7 +23,7 @@ class HysteresisLogic(interfaces.Logic):
         if self.lastOutput == 1:
             self.output = self.shouldCool(input, setpoint - self.hysteresisUnder)
         else:
-            self.output = self.shouldCool(input, setpoint + self.hysteresisUnder)
+            self.output = self.shouldCool(input, setpoint + self.hysteresisOver)
 
         self.lastOutput = self.output
         return self.output*100.0
