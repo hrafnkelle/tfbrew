@@ -274,9 +274,12 @@ class BlynkComponent(interfaces.Component):
         self.run()
 
     async def asyncRun(self):
-        self.blynk.reset()
-        transport, protocol = await asyncio.get_event_loop().create_connection(lambda: self.blynk, self.server, self.port)
-        self.blynk = protocol
+        try:
+            self.blynk.reset()
+            transport, protocol = await asyncio.get_event_loop().create_connection(lambda: self.blynk, self.server, self.port)
+            self.blynk = protocol
+        except ConnectionError as e:
+            logger.warning("Error connecting to Blynk server: %s"%str(e))
 
     def run(self):
        asyncio.ensure_future(self.asyncRun())
