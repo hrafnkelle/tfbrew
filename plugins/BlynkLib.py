@@ -103,6 +103,8 @@ class BlynkProtocol(asyncio.Protocol):
 
     async def _heartbeat(self):
         while True:
+            if self.state in {DISCONNECTED, CLOSED}:
+                await self.component.asyncRun()
             isOnline = self._server_alive()
             if not isOnline:
                 logger.warning("server not online when sending heartbeat")
@@ -167,6 +169,8 @@ class BlynkProtocol(asyncio.Protocol):
             raise ValueError("Unknown message cmd: %s" % cmd)
 
     def _server_alive(self):
+        if self.state in {DISCONNECTED, CLOSED}:
+            return False
         c_time = int(time.time())
         if self._m_time != c_time:
             self._m_time = c_time
@@ -242,7 +246,6 @@ class BlynkProtocol(asyncio.Protocol):
         self.state = CLOSED
         if exc:
             logger.exception(exc)
-        self.component.run()
 
     def VIRTUAL_READ(blynk, pin):
         class Decorator():
@@ -271,7 +274,6 @@ class BlynkComponent(interfaces.Component):
         self.port = port
         self.token = token
         self.blynk = BlynkProtocol(self.token, self)
-        self.run()
 
     async def asyncRun(self):
         try:
