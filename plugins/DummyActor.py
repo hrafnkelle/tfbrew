@@ -32,4 +32,4 @@ class DummyActor(Actor):
                 logger.info("Turning %s on"%self.name)
                 self.on()
             else:
-                logger.warning"DummyActor:%s unsupported data value: %d"%(self.name, data))
+                logger.warning("DummyActor:%s unsupported data value: %d"%(self.name, data))

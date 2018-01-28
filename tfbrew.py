@@ -15,7 +15,7 @@ import controller
 import event
 from common import app, components
 
-logging.basicConfig(level=logging.DEBUG, filename='tfbrew.log', filemode='w')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s', filename='tfbrew.log', filemode='w')
 logger = logging.getLogger(__name__)
 
 console = logging.StreamHandler()
