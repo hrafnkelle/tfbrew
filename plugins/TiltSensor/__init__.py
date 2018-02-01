@@ -79,5 +79,5 @@ class TiltSensor(interfaces.Sensor):
 #                         'gravity': beacon['minor']
 #                     })
                     return (to_celsius(beacon['major']), beacon['minor'])
-            logger.info("Nothing found from bluetooth")
+            logger.debug("Nothing found from bluetooth")
     

@@ -54,7 +54,9 @@ class TPLinkProtocol(asyncio.Protocol):
 class TPLinkActor(Actor):
     onMsg = '{"system":{"set_relay_state":{"state":1}}}'
     offMsg = '{"system":{"set_relay_state":{"state":0}}}'
+    infoMsg = '{"system":{"get_sysinfo":{}}}'
     refreshInterval = 10
+
     def __init__(self, name, settings):
         self.name = name
         self.power = 0
@@ -84,13 +86,15 @@ class TPLinkActor(Actor):
         self.power = power
         notify(Event(source=self.name, endpoint='power', data=power))
 
+    async def isRelayOn(self):
+            await self.send(self.infoMsg)
+
     async def send(self, msg):
         try:
             (transport, protocol) = await self.loop.create_connection(lambda: self.protocol, self.settings['ip'], 9999)
             transport.write(encrypt(bytes(msg,'ascii')))
         except OSError as e:
-            logger.warning("Timeout sending to TPLinkActor %s"%self.name)
-            logger.exception(e)
+            logger.warning("TPLinkActor %s: %s"%(self.name, str(e)))
 
     def on(self):
         print("Turning %s on"%self.name)

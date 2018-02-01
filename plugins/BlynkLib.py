@@ -35,7 +35,6 @@ def factory(name, settings):
     component = BlynkComponent(name, blynkServer, blynkPort, settings['token'])
     return component
 
-
 epoch = time.time()
 
 const = lambda x: x
@@ -103,12 +102,15 @@ class BlynkProtocol(asyncio.Protocol):
 
     async def _heartbeat(self):
         while True:
-            if self.state in {DISCONNECTED, CLOSED}:
-                await self.component.asyncRun()
-            isOnline = self._server_alive()
-            if not isOnline:
-                logger.warning("server not online when sending heartbeat")
-            await asyncio.sleep(HB_PERIOD)
+            try:
+                if self.state in {DISCONNECTED, CLOSED}:
+                    await self.component.asyncRun()
+                isOnline = self._server_alive()
+                if not isOnline:
+                    logger.warning("server not online when sending heartbeat")
+                await asyncio.sleep(HB_PERIOD)
+            except OSError as e:
+                logger.exception("%s %s"%(e.__class__.__name__,str(e)))
 
     def _new_msg_id(self):
         self._msg_id += 1
@@ -280,7 +282,7 @@ class BlynkComponent(interfaces.Component):
             self.blynk.reset()
             transport, protocol = await asyncio.get_event_loop().create_connection(lambda: self.blynk, self.server, self.port)
             self.blynk = protocol
-        except ConnectionError as e:
+        except (ConnectionError, TimeoutError) as e:
             logger.warning("Error connecting to Blynk server: %s"%str(e))
 
     def run(self):
@@ -296,27 +298,3 @@ class BlynkComponent(interfaces.Component):
         pinNr = int(endpoint[1:])
         #print("%s : %s"%(type,event))
         self.blynk.virtual_write(pinNr, data)
-
-
-# blynk._vr_pins[1] = BlynkLib.VrPin(None, lambda val: ctrl.setState('on' if val=='1' else 'off'))
-# blynk._vr_pins[6] = BlynkLib.VrPin(None, lambda val: (pump.on if val=='1' else pump.off)())
-
-# event.register('Heater', lambda e: blynk.virtual_write(2, e.data))
-# event.register('RecircTemp', lambda e: blynk.virtual_write(3, e.data))
-
-# @blynk.VIRTUAL_WRITE(5)
-# def setpointwrite_handler(value):
-#     ctrl.targetTemp = float(value)
-
-# @blynk.VIRTUAL_READ(4)
-# def setpointread_handler():
-#     blynk.virtual_write(4, ctrl.targetTemp)
-
-# @blynk.VIRTUAL_WRITE(6)
-# def pump_handler(value):
-#     if value == '0':
-#         pump.off()
-#     elif value == '1':
-#         pump.on()
-#     else:
-#         print("Unknow value for pump handler")
