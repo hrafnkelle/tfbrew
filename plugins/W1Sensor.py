@@ -1,7 +1,10 @@
+import logging
 import aiofiles
 import asyncio
 from interfaces import Sensor
 from event import notify, Event
+
+logger = logging.getLogger(__name__)
 
 def factory(name, settings):
     id = settings['id']

@@ -110,7 +110,7 @@ class BlynkProtocol(asyncio.Protocol):
                     logger.warning("server not online when sending heartbeat")
                 await asyncio.sleep(HB_PERIOD)
             except OSError as e:
-                logger.exception("%s %s"%(e.__class__.__name__,str(e)))
+                logger.warning(e)
 
     def _new_msg_id(self):
         self._msg_id += 1
