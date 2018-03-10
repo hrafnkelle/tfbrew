@@ -1,0 +1,11 @@
+[Unit]
+Description=TFBrew - Brewing and Fermentaiton control
+Documentation=https://github.com/hrafnkelle/tfbrew/wiki
+
+[Service]
+WorkingDirectory=/home/pi/tfbrew
+ExecStart=/home/pi/tfbrew/bin/python /home/pi/tfbrew/tfbrew.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
