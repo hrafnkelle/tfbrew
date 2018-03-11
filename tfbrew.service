@@ -4,7 +4,7 @@ Documentation=https://github.com/hrafnkelle/tfbrew/wiki
 
 [Service]
 WorkingDirectory=/home/pi/tfbrew
-ExecStart=/home/pi/tfbrew/bin/python /home/pi/tfbrew/tfbrew.py
+ExecStart=python3 /home/pi/tfbrew/tfbrew.py
 Restart=on-failure
 
 [Install]
