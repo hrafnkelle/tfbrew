@@ -5,7 +5,7 @@ import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 
 def factory(name, settings):
-    return GPIOActor(name, settings['gpio'], settings['pwmFrequency'])
+    return GPIOActor(name, settings['gpio'], settings.get('pwmFrequency',2))
 
 
 class GPIOActor(Actor):

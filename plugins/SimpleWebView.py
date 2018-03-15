@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 def factory(name, settings):
     logger.info("Initializing SimpleWebView")
-    return SimpleWebView(name, settings['endpoints'])
+    endpoints = settings.get('endpoints', {})
+    return SimpleWebView(name, endpoints)
 
 class SimpleWebView(interfaces.Component):
     def __init__(self, name, endpoints):
@@ -31,9 +32,7 @@ class SimpleWebView(interfaces.Component):
         self.endpointData[endpoint] = data
 
     async def handler(self, name, request):
-        print("handling %s"%name)
         stuff = await request.json()
-        print("endpoint %s got %s"%(name, stuff))
         notify(Event(source=self.name, endpoint=name, data=stuff))
         return web.json_response(stuff)
 
