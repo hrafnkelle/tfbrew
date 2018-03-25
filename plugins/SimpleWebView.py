@@ -37,4 +37,4 @@ class SimpleWebView(interfaces.Component):
         return web.json_response(stuff)
 
     def webView(self, request):
-        return web.json_response(text=str(self.endpointData))
+        return web.json_response(self.endpointData)
