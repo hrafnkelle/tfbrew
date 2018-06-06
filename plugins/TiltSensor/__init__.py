@@ -50,6 +50,7 @@ class TiltSensor(interfaces.Sensor):
     def __init__(self, name):
        self.name = name
        self.dev_id = 0
+       self.lastTemp = 0.0
        try:
            self.sock = bluez.hci_open_dev(self.dev_id)
            logger.info('Starting pytilt logger')
@@ -63,6 +64,7 @@ class TiltSensor(interfaces.Sensor):
     async def run(self):
         while True:
             (temp, gravity) = await asyncio.get_event_loop().run_in_executor(None, self.monitor_tilt)
+            self.lastTemp = temp
             notify(Event(source=self.name, endpoint='temperature', data=temp))
             notify(Event(source=self.name, endpoint='gravity', data=gravity/1000.0))
             notify(Event(source=self.name, endpoint='brix', data=to_brix(gravity/1000.0)))
@@ -81,3 +83,5 @@ class TiltSensor(interfaces.Sensor):
                     return (to_celsius(beacon['major']), beacon['minor'])
             logger.debug("Nothing found from bluetooth")
     
+    def temp(self):
+        return self.lastTemp
