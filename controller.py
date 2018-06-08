@@ -10,6 +10,7 @@ class Controller(interfaces.Component, interfaces.Runnable):
     def __init__(self, name, sensor, actor, logic, targetTemp=0.0, initialState='off'):
         self.name = name
         self.state = initialState
+        self.heater_override = 0
         self.sensor = sensor
         self.actor = actor
         self.targetTemp = targetTemp
@@ -28,6 +29,8 @@ class Controller(interfaces.Component, interfaces.Runnable):
                 logger.warning("Controller unsupported data value: %f"%data)
         elif endpoint == 'setpoint':
             self.setSetpoint(float(data))
+        elif endpoint == 'heater_override':
+            self.heater_override = int(data)
         else:
             self.logic.callback(endpoint, data)
             #logger.warning("Unknown type/endpoint for Contorller %s"%endpoint)
@@ -47,8 +50,9 @@ class Controller(interfaces.Component, interfaces.Runnable):
         while True:
             if self.state == 'on':
                 output = self.logic.calc(self.sensor.temp(), self.targetTemp)
+                if self.heater_override == 1:
+                    output = 100
                 self.actor.updatePower(output)
                 await asyncio.sleep(10)
             else:
-                self.actor.updatePower(0)
                 await asyncio.sleep(1)
