@@ -12,7 +12,7 @@ class Runnable:
         pass
 
 class Measurable:
-    def getMeasurements():
+    def getMeasurements(self):
         pass
 
 class Sensor(Component, Runnable, Measurable):
