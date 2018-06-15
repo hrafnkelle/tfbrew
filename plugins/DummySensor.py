@@ -33,6 +33,12 @@ class DummySensor(Sensor):
     def temp(self):
         return self.lastTemp
 
+    def callback(self, endpoint, data):
+        if endpoint == 'temperature':
+            self.fakeTemp = float(data)
+        else:
+            super.callback(endpoint, data)
+
 
     # def get(self, request):
     #     return web.Response(text="%f"%self.temp())
