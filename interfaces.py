@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Component:
-    def callback(self, type, data):
+    def callback(self, endpoint, data):
         logger.debug("Not handled event: %s"%str(data))
         pass
 
@@ -37,3 +37,6 @@ class Actor(Component, Runnable):
 class Logic(Component):
     def calc(self, input, setpoint):
         pass
+
+class Controller(Component, Runnable):
+    pass
