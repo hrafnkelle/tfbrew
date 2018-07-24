@@ -26,6 +26,7 @@ TFBrew is based around the idea of components that send each other messages. Com
 The following components are available
 
 + W1Sensor - for using one-wire sensors like the ds18b20
++ RTDSensor - for using PT100 sensors through the MAX31865
 + TiltSensor - for using the Tilt Hydrometer
 + DummySensor - simulating a sensor with a configurable value + noise
 + GPIOActor - for controlling relays (SSR) with the GPIO pins on the Raspberry Pi
