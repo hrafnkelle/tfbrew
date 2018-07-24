@@ -4,7 +4,7 @@ def factory(name, settings):
     hysteresisOver = settings.get('allowedOvershoot', 0.5)
     hysteresisUnder = settings.get('allowedUndershoot', 0.5)
     keepHot = not settings.get('keepCold', True)
-    keepHot = settings.get('keepHot', False)
+    keepHot = settings.get('keepHot', keepHot)
     if keepHot:
         return HysteresisHeatingLogic(hysteresisOver, hysteresisUnder)
     else:
