@@ -23,6 +23,9 @@ class DummyActor(Actor):
         notify(Event(source=self.name, endpoint='power', data=self.power))
         logger.debug("%s: Setting power to %f"%(self.name, self.power))
 
+    def getPower(self):
+        return self.power
+
     def callback(self, endpoint, data):
         if endpoint == 'state':
             if data == 0:

@@ -1,3 +1,7 @@
+consoleLoglevel: WARNING
+port: 8080
+enableWebUI: false
+
 sensors:
   - RecircTemp:
      plugin: DummySensor 

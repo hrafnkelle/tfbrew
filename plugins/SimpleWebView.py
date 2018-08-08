@@ -23,7 +23,7 @@ class SimpleWebView(interfaces.Component):
     def __init__(self, name, endpoints):
         self.name = name
         self.endpointData = {}
-        app.router.add_get('/', self.webView)
+        app.router.add_get('/simpleview', self.webView)
 
         for name in endpoints:
             app.router.add_put("/%s"%name, partial(self.handler, name))

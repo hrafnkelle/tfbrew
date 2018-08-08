@@ -23,6 +23,9 @@ class GPIOActor(Actor):
         self.p.ChangeDutyCycle(self.power)
         notify(Event(source=self.name, endpoint='power', data=power))
 
+    def getPower(self):
+        return self.power
+
     def on(self):
         self.updatePower(100.0)
 

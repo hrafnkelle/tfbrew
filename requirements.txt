@@ -4,3 +4,4 @@ ruamel.yaml
 rpi.gpio
 pybluez
 spidev
+sockjs

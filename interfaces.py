@@ -27,6 +27,9 @@ class Actor(Component, Runnable):
     def updatePower(self, power):
         pass
 
+    def getPower(self):
+        pass
+        
     def on(self):
         pass
 

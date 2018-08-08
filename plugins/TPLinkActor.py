@@ -86,6 +86,9 @@ class TPLinkActor(Actor):
         self.power = power
         notify(Event(source=self.name, endpoint='power', data=power))
 
+    def getPower(self):
+        return self.power
+
     async def isRelayOn(self):
             await self.send(self.infoMsg)
 
