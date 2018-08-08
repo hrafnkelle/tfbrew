@@ -61,11 +61,11 @@ Installation
 TFBrew requires at least Python 3.5 (for asyncio async/await support)
 
 Clone this repository, and set up a virtualenv
-You will need to install the following python packages (pip install into your virtualenv)
-+ aiofiles
-+ aiohttp
-+ RPi.GPIO
-+ ruamel.yaml
-+ pybluez
+pip install the python packages in the requirements.txt file into your virtualenv
+```
+pip install -r requirements.txt
+```
 
 then run the tfbrew.py file
+
+Please consult the [Wiki](https://github.com/hrafnkelle/tfbrew/wiki) for further information.
