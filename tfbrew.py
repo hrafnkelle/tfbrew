@@ -15,17 +15,18 @@ import controller
 import event
 from common import app, components
 
+yaml = YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
+config = yaml.load(open('config.yaml',mode='r'))
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s', filename='tfbrew.log', filemode='w')
 logger = logging.getLogger(__name__)
 
 console = logging.StreamHandler()
-console.setLevel(logging.WARNING)
+console.setLevel(config.get('consoleLoglevel', 'WARNING'))
 logging.getLogger('').addHandler(console)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "plugins"))
 
-yaml = YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
-config = yaml.load(open('config.yaml',mode='r'))
 for componentType in ['sensors', 'actors', 'extensions']:
     for component in config[componentType]:
         for name, attribs in component.items():
