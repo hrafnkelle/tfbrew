@@ -48,7 +48,6 @@ for conn in config['connections']:
     (sendEvent, recvEvent) = conn.split('=>')
     (sendComponent, sendType) = sendEvent.split('.')
     (recvComponent, recvType) = recvEvent.split('.')
-    logger.debug("About to register %s to %s type %s"%(sendComponent, recvComponent, recvType))
     event.register(sendEvent, lambda event, rc=recvComponent, rt=recvType: components[rc].callback(rt, event))
 
 async def start_background_tasks(app):
