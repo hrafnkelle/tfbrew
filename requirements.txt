@@ -3,3 +3,5 @@ aiohttp
 ruamel.yaml
 rpi.gpio
 pybluez
+sockjs
+

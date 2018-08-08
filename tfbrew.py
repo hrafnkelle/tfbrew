@@ -40,9 +40,10 @@ for ctrl in config['controllers']:
         logic = logicPlugin.factory(name, attribs['logicCoeffs'])
         sensor = components[attribs['sensor']]
         actor = components[attribs['actor']]
+        agitator = components.get(attribs.get('agitator', ''),None)
         initialSetpoint = attribs.get('initialSetpoint', 67.0)
-        initialState = 'on' if attribs.get('initialState', False) else 'off'
-        components[name] = controller.Controller(name, sensor, actor, logic, initialSetpoint, initialState)
+        initiallyEnabled = True if attribs.get('initialState', 'on') == 'on' else 'off'
+        components[name] = controller.Controller(name, sensor, actor, logic, agitator, initialSetpoint, initiallyEnabled)
 
 
 for conn in config['connections']:
@@ -60,4 +61,16 @@ async def cleanup_background_tasks(app):
 app.on_startup.append(start_background_tasks)
 app.on_cleanup.append(cleanup_background_tasks)
 
-web.run_app(app)
+isWebUIenabled = config.get('enableWebUI',False)
+async def rootRouteHandler(request):
+    if isWebUIenabled:
+        return web.HTTPFound('/static/index.html')
+    else:
+        return web.Response(text="Web UI not enabled in config.yaml")
+
+app.router.add_get('/', rootRouteHandler)
+
+if isWebUIenabled:
+    app.router.add_static('/static', 'static/')
+
+web.run_app(app, port=config.get('port',8080))
