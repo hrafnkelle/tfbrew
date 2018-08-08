@@ -12,7 +12,7 @@ class Runnable:
         pass
 
 class Measurable:
-    def getMeasurements():
+    def getMeasurements(self):
         pass
 
 class Sensor(Component, Runnable, Measurable):
@@ -27,6 +27,9 @@ class Actor(Component, Runnable):
     def updatePower(self, power):
         pass
 
+    def getPower(self):
+        pass
+        
     def on(self):
         pass
 
