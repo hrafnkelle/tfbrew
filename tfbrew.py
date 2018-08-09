@@ -16,7 +16,12 @@ import event
 from common import app, components
 
 yaml = YAML(typ='safe')   # default, if not specfied, is 'rt' (round-trip)
-config = yaml.load(open('config.yaml',mode='r'))
+configFile = 'config.yaml'
+if len(sys.argv) > 1:
+    configFile = sys.argv[1]
+print("Using config from %s"%configFile)
+    
+config = yaml.load(open(configFile,mode='r'))
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s', filename='tfbrew.log', filemode='w')
 logger = logging.getLogger(__name__)
