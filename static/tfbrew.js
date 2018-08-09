@@ -22,6 +22,8 @@ var plotComp = {
         newData: function(datapoint) {
             this.chart.data.labels.push(datapoint.when)
             this.chart.data.datasets[0].data.push(datapoint.temperature)
+            this.chart.data.datasets[1].data.push(datapoint.power)
+            this.chart.data.datasets[2].data.push(datapoint.setpoint)
             this.chart.update()
         }
     },
@@ -37,7 +39,25 @@ var plotComp = {
                     backgroundColor: chartColors.red,
 					borderColor: chartColors.red,
                     data: [],
-                }]
+                    yAxisID: 'temperature-axis'
+                },
+                {
+                    label: 'Power',
+                    fill: true,
+                    backgroundColor: chartColors.green,
+					borderColor: chartColors.green,
+                    data: [],
+                    yAxisID: 'power-axis'
+                },
+                {
+                    label: 'Setpoint',
+                    fill: false,
+                    backgroundColor: chartColors.blue,
+					borderColor: chartColors.blue,
+                    data: [],
+                    yAxisID: 'temperature-axis'
+                }
+                ]
             },
             options: {
                 scales: {
@@ -49,9 +69,17 @@ var plotComp = {
 						// }
 					}],
                     yAxes: [{
-                        ticks: {
-                            beginAtZero:false
-                        }
+                            beginAtZero:false,
+                            position: 'left',
+                            id: 'temperature-axis'
+                        },{
+                            beginAtZero:true,
+                            ticks: {
+                                suggestedMin: 0,
+                                suggestedMax: 100
+                            },
+                            position: 'right',
+                            id: 'power-axis'
                     }]
                 }
             }
@@ -138,7 +166,10 @@ Vue.component('brewcontroller', {
                 for (key in msg.data) {
                     this.controllerState[key] = msg.data[key];
                 }
-                var datapoint = {'when': moment(), 'temperature': this.controllerState.temperature, 'power': this.controllerState.power}
+                var datapoint = {'when': moment(), 
+                                'temperature': this.controllerState.temperature, 
+                                'power': this.controllerState.power, 
+                                setpoint: this.controllerState.setpoint}
                 this.$refs.chart.newData(datapoint)
             };
             this.ws.onclose = () => {
