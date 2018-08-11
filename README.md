@@ -28,6 +28,7 @@ The following components are available
 + W1Sensor - for using one-wire sensors like the ds18b20
 + RTDSensor - for using PT100 sensors through the MAX31865
 + TiltSensor - for using the Tilt Hydrometer
++ iSpindelSensor - for using the iSpindel Hydrometer
 + DummySensor - simulating a sensor with a configurable value + noise
 + GPIOActor - for controlling relays (SSR) with the GPIO pins on the Raspberry Pi
 + TPLinkActor - for controlling a TPLink WiFi socket
