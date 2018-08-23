@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from collections import deque
+from time import time
 
 from aiohttp import web
 import json
@@ -23,6 +25,10 @@ class Controller(interfaces.Component, interfaces.Runnable):
         self.agitator = agitator
         self.targetTemp = targetTemp
         self.logic = logic
+        self.timestamp_history = deque(maxlen=100)
+        self.power_history = deque(maxlen=100)
+        self.temp_history = deque(maxlen=100)
+        self.setpoint_history = deque(maxlen=100)
         sockjs.add_endpoint(app, prefix='/controllers/%s/ws'%self.name, name='%s-ws'%self.name, handler=self.websocket_handler)
         asyncio.ensure_future(self.run())
 
@@ -96,17 +102,20 @@ class Controller(interfaces.Component, interfaces.Runnable):
         return details
 
     async def run(self):
+        await asyncio.sleep(5)
         while True:
             output = self.actor.getPower()
             if self.enabled:
                 if self._autoMode:
                     output = self.logic.calc(self.sensor.temp(), self.targetTemp)
                 self.actor.updatePower(output)
-                self.broadcastDetails()
-                await asyncio.sleep(10)
-            else:
-                await asyncio.sleep(1)
-                self.broadcastDetails()
+            self.broadcastDetails()
+            self.timestamp_history.append(time())
+            self.power_history.append(output)
+            self.temp_history.append(self.sensor.temp())
+            self.setpoint_history.append(self.targetTemp)
+            await asyncio.sleep(10)
+
 
 
     async def websocket_handler(self, msg, session):
@@ -132,6 +141,21 @@ async def controllerDetail(request):
     except KeyError as e:
         raise web.HTTPNotFound(reason='Unknown controller %s'%str(e))
 
+async def dataHistory(request):
+    try:
+        controllerName = request.match_info['name']
+        controller = components[controllerName]
+        data = {
+            'label': list(controller.timestamp_history),
+            'temperature': list(controller.temp_history),
+            'power': list(controller.power_history),
+            'setpoint': list(controller.setpoint_history)
+            }
+        return web.json_response(data)
+    except KeyError as e:
+        raise web.HTTPNotFound(reason='Unknown controller %s'%str(e))
+
 
 app.router.add_get('/controllers', listControllers)
 app.router.add_get('/controllers/{name}', controllerDetail, name='controllerDetail')
+app.router.add_get('/controllers/{name}/datahistory', dataHistory, name='dataHistory')

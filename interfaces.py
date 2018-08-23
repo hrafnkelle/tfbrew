@@ -17,7 +17,7 @@ class Measurable:
 
 class Sensor(Component, Runnable, Measurable):
 
-    async def run(self, app):
+    async def run(self):
         pass
 
     async def readTemp(self):

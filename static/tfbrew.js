@@ -12,6 +12,7 @@ var plotComp = {
     template: `
     <canvas ref="plot" width="400" height="400"></canvas>
     `,
+    props: ['href'],
     data: function() {
         return {
             ctx: null,
@@ -20,7 +21,7 @@ var plotComp = {
     },
     methods: {
         newData: function(datapoint) {
-            this.chart.data.labels.push(datapoint.when)
+            this.chart.data.labels.push(moment(datapoint.when))
             this.chart.data.datasets[0].data.push(datapoint.temperature)
             this.chart.data.datasets[1].data.push(datapoint.power)
             this.chart.data.datasets[2].data.push(datapoint.setpoint)
@@ -44,7 +45,7 @@ var plotComp = {
                 {
                     label: 'Power',
                     fill: true,
-                    backgroundColor: chartColors.green,
+                    backgroundColor: 'rgba(75, 192, 192,0.3)',
 					borderColor: chartColors.green,
                     data: [],
                     yAxisID: 'power-axis'
@@ -62,11 +63,23 @@ var plotComp = {
             options: {
                 scales: {
                     xAxes: [{
-						type: 'time',
-						distribution: 'series',
-						// ticks: {
-						// 	source: 'labels'
-						// }
+                        type: 'time',
+                        time: {
+                            unit: 'minute',
+                            stepSize: 5,
+                            displayFormats: {
+                            //    'millisecond': 'HH:MM:SS',
+                            //    'second': 'HH:MM:SS',
+                               minute: "LTS",
+                            //    'hour': 'HH:MM:SS',
+                            //    'day': 'HH:MM:SS',
+                            //    'week': 'HH:MM:SS',
+                            //    'month': 'HH:MM:SS',
+                            //    'quarter': 'HH:MM:SS',
+                            //    'year': 'HH:MM:SS',
+                            }
+                        },
+						//distribution: 'series',
 					}],
                     yAxes: [{
                             beginAtZero:false,
@@ -84,7 +97,15 @@ var plotComp = {
                 }
             }
         });  
-        
+        fetch(this.href)
+        .then(response=>response.json())
+        .then(json =>{
+            json.label.forEach(x=>this.chart.data.labels.push(Math.floor(1000*x)))
+            json.temperature.forEach(x=>this.chart.data.datasets[0].data.push(x))
+            json.power.forEach(x=>this.chart.data.datasets[1].data.push(x))
+            json.setpoint.forEach(x=>this.chart.data.datasets[2].data.push(x))
+            this.chart.update()      
+        })
     }
 }
 
@@ -120,13 +141,18 @@ Vue.component('brewcontroller', {
             <b-col col sm="2"><b-button variant="success" :pressed="controllerState.automatic" @click="automatic">{{ automaticStr }}</b-button></b-col>
             <b-col col sm="2"><b-button variant="success" :pressed="controllerState.agitating" @click="agitating">{{ agitatedStr }}</b-button></b-col>
         </b-row>
-    </b-container>
-    <plot ref="chart"></plot>
+        <b-row>
+            <b-col col sm="2" md="6">
+                <plot ref="chart" :href="this.href + '/datahistory'"></plot>
+            </b-col>
+        </b-row>
+        </b-container>
     </div>`,
     data: function() {
         return {
             start: Date.now(),
             ws: null,
+            ws_connfail: 0,
             controllerState: {}
         }
     },
@@ -156,7 +182,6 @@ Vue.component('brewcontroller', {
             this.ws.send(JSON.stringify({'power': p}))
         },
         newWsConn: function(url) {
-            var that = this
             this.ws = new SockJS(url);
             // sock.onopen = function() {
             //     console.log('open');
@@ -172,9 +197,14 @@ Vue.component('brewcontroller', {
                                 setpoint: this.controllerState.setpoint}
                 this.$refs.chart.newData(datapoint)
             };
-            this.ws.onclose = () => {
+            this.ws.onclose = (e) => {
+                console.log("WS Close")
+                console.log(e)
                this.newWsConn(url);
-            };               
+            };
+            this.ws.onerror = (e) => {
+                console.log("WS Error: " + e)
+            }               
         },
         enable: function () {
             this.ws.send(JSON.stringify({'enabled': !this.controllerState.enabled}))
@@ -186,7 +216,6 @@ Vue.component('brewcontroller', {
             this.ws.send(JSON.stringify({'agitating': !this.controllerState.agitating}))
         },
         setpointUpdate: function(value) {
-            console.log("setpoint = "+value)
             this.controllerState.setpoint = value
             this.ws.send(JSON.stringify({'setpoint': value}))
         }
