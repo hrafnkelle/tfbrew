@@ -53,5 +53,5 @@ connections:
   #  - Heater.power=>blynk.v7
   #  - Fridge.initialSetpoint=>blynk.v8
   #  - blynk.v8=>Fridge.setpoint
-  - FermentationHeat.state=>web.enable
-  - web.enable=>FermentationHeat.state
+  - Fridge.state=>web.enable
+  - web.enable=>Fridge.state
