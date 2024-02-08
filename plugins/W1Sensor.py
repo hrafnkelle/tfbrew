@@ -1,6 +1,14 @@
+# W1Sensor.py
+# 
+# Changelog:
+#  08-FEB-24: Update to fixes from michaelcadilhac's fork and changed return value to Fahrenheit
+#
+# Ver: 1.0
+
 import logging
 import aiofiles
 import asyncio
+import re
 from interfaces import Sensor
 from event import notify, Event
 
@@ -34,11 +42,11 @@ class W1Sensor(Sensor):
     async def readTemp(self):
         async with aiofiles.open('/sys/bus/w1/devices/%s/w1_slave'% self.sensorId, mode='r') as sensor_file:
             contents = await sensor_file.read()
-        if contents.split('\n')[0].split(' ')[11] == "YES":
-            temp = float(contents.split("=")[-1]) / 1000
-            return temp
-        else:
+        match = re.search('YES\n.*=(.*)$', contents)
+        if match is None:
             raise RuntimeError("Failed to read W1 Temperature: %s"%contents)
+	# Changed return value to F from original "return float(match.group(1)) / 1000" for C
+        return (((float(match.group(1)) / 1000) * 9)/5) + 32
 
     def temp(self):
         return self.lastTemp
