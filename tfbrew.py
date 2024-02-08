@@ -1,6 +1,9 @@
-"""
-Backend for a yet another brewing application controlled by a Blynk frontend
-"""
+# tfbrew.py
+# 
+# Changelog:
+#  08-FEB-24: Part of fix for loop exception.  Think due to new OS or Python versions (Fix #1)
+#
+# Ver: 1.0
 
 import sys, os
 import importlib
@@ -78,4 +81,7 @@ app.router.add_get('/', rootRouteHandler)
 if isWebUIenabled:
     app.router.add_static('/static', 'static/')
 
-web.run_app(app, port=config.get('port',8080))
+# Add if and loop= to pass the event loop (Fix #1)
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    web.run_app(app, port=config.get('port', 8080), loop=loop)
