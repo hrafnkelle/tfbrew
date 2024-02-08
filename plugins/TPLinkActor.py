@@ -1,3 +1,10 @@
+# TPLinkActor.py
+# 
+# Changelog:
+#  08-FEB-24: Updated to support newer FW and HW versions to include HW Ver. 2.0 and SW Ver: 1.5.4 of HS100 and HS100
+#
+# Ver: 1.0
+
 """
 Implements using a TPLink socket as an actor
 """
@@ -18,20 +25,20 @@ def factory(name, settings):
 # XOR Autokey Cipher with starting key = 171
 def encrypt(string):
     key = 171
-    result = b'\0\0\0\0'
-    for i in string:
+    result = b"\0\0\0"+ chr(len(string)).encode('latin-1')
+    for i in string.encode('latin-1'):
         a = key ^ i
         key = a
-        result += bytes([a])
+        result += chr(a).encode('latin-1')
     return result
 
 def decrypt(string):
     key = 171
-    result = b''
+    result = ""
     for i in string:
         a = key ^ i
-        key = i
-        result += bytes(chr(a), 'ascii')
+        key = i 
+        result += chr(a)
     return result
 
 
@@ -41,7 +48,7 @@ class TPLinkProtocol(asyncio.Protocol):
 
     def connection_made(self, transport):
         self.transport = transport
-        #print("connected")
+        print("connected to TPLink SmartPlug")
 
     def connection_lost(self, exc):
         if exc:
@@ -49,7 +56,7 @@ class TPLinkProtocol(asyncio.Protocol):
 
     def data_received(self, data):
         msg = decrypt(data[4:])
-        #print(msg.decode('ascii'))
+        print(msg)
 
 class TPLinkActor(Actor):
     onMsg = '{"system":{"set_relay_state":{"state":1}}}'
@@ -95,7 +102,7 @@ class TPLinkActor(Actor):
     async def send(self, msg):
         try:
             (transport, protocol) = await self.loop.create_connection(lambda: self.protocol, self.settings['ip'], 9999)
-            transport.write(encrypt(bytes(msg,'ascii')))
+            transport.write(encrypt(msg))
         except OSError as e:
             logger.warning("TPLinkActor %s: %s"%(self.name, str(e)))
 
