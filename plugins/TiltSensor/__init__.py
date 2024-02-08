@@ -1,3 +1,10 @@
+# ../TiltSensor/__init__.py
+# 
+# Changelog:
+#  08-FEB-24: Added abv, attenuation, and brix. Changed return value to Fahrenheit not Celsius. Clean up work.
+#
+# Ver: 1.0
+
 import asyncio
 import sys
 import datetime
@@ -14,7 +21,7 @@ from event import notify, Event
 logger = logging.getLogger(__name__)
 
 def factory(name, settings):
-   return TiltSensor(name)
+   return TiltSensor(name, settings['color'], settings['tempclbr'], settings['gravclbr'], settings['startgrav'])
 
 
 TILTS = {
@@ -43,14 +50,27 @@ def to_celsius(fahrenheit):
     return round((fahrenheit - 32.0) / 1.8, 2)
 
 def to_brix(sg):
-    brix = (((182.4601*sg  -775.6821)*sg + 1262.7794)*sg - 669.5622)
+    brix = round((((182.4601*sg  -775.6821)*sg + 1262.7794)*sg - 669.5622),2)
     return brix
 
+def to_abv(sg,stgrav):
+    abv = round((stgrav - sg) * 131.25, 2)
+    return abv
+
+def to_atten(sg,stgrav):
+    atten = round(100 * ((stgrav - sg)/(stgrav - 1)), 2)
+    return atten
+
 class TiltSensor(interfaces.Sensor):
-    def __init__(self, name):
+    def __init__(self, name, color, tempcalbr, gravcalbr, startgrav):
        self.name = name
+       self.color = color
+       self.tempcalbr = tempcalbr
+       self.gravcalbr = gravcalbr
+       self.startgrav = startgrav
        self.dev_id = 0
        self.lastTemp = 0.0
+       self.lastGravity = 1.0
        try:
            self.sock = bluez.hci_open_dev(self.dev_id)
            logger.info('Starting pytilt logger')
@@ -64,24 +84,30 @@ class TiltSensor(interfaces.Sensor):
     async def run(self):
         while True:
             (temp, gravity) = await asyncio.get_event_loop().run_in_executor(None, self.monitor_tilt)
+            gravity = gravity + self.gravcalbr
+            temp = temp + self.tempcalbr
             self.lastTemp = temp
+            self.lastGravity = gravity/1000.0
             notify(Event(source=self.name, endpoint='temperature', data=temp))
             notify(Event(source=self.name, endpoint='gravity', data=gravity/1000.0))
+            notify(Event(source=self.name, endpoint='abv', data=to_abv(gravity/1000.0, self.startgrav)))
+            notify(Event(source=self.name, endpoint='atten', data=to_atten(gravity/1000.0, self.startgrav)))
+            notify(Event(source=self.name, endpoint='ograv', data=self.startgrav))
             notify(Event(source=self.name, endpoint='brix', data=to_brix(gravity/1000.0)))
 
     def monitor_tilt(self):
         while True:
             beacons = distinct(blescan.parse_events(self.sock, 10))
             for beacon in beacons:
-                if beacon['uuid'] in TILTS.keys():
-#                     print({
-#                         'color': TILTS[beacon['uuid']],
-#                         'timestamp': datetime.datetime.now().isoformat(),
-#                         'temp': to_celsius(beacon['major']),
-#                         'gravity': beacon['minor']
-#                     })
-                    return (to_celsius(beacon['major']), beacon['minor'])
-            logger.debug("Nothing found from bluetooth")
+                if beacon['uuid'] in TILTS.keys() and TILTS[beacon['uuid']] == self.color:
+                    #Change reutrn value to Fahrenheit. Original line kept for flexibility
+                    #return (to_celsius(beacon['major']), beacon['minor'])
+                    return (beacon['major'], beacon['minor'])
+            else:
+                logger.debug("Nothing found from bluetooth")
     
     def temp(self):
         return self.lastTemp
+
+    def gravity(self):
+        return self.lastGravity

@@ -89,10 +89,8 @@ def hci_le_set_scan_parameters(sock):
 def parse_events(sock, loop_count=100):
     old_filter = sock.getsockopt(bluez.SOL_HCI, bluez.HCI_FILTER, 14)
 
-    # perform a device inquiry on bluetooth device #0
-    # The inquiry should last 8 * 1.28 = 10.24 seconds
-    # before the inquiry is performed, bluez should flush its cache of
-    # previously discovered devices
+    # perform a device inquiry on bluetooth device #0. The inquiry should last 8 * 1.28 = 10.24 seconds
+    # before the inquiry is performed, bluez should flush its cache of previously discovered devices
     flt = bluez.hci_filter_new()
     bluez.hci_filter_all_events(flt)
     bluez.hci_filter_set_ptype(flt, bluez.HCI_EVENT_PKT)
@@ -100,22 +98,26 @@ def parse_events(sock, loop_count=100):
     beacons = []
     for i in range(0, loop_count):
         pkt = sock.recv(255)
+        # Find the index of the start of the UUID (where "\x02\x15" is located)
+        uuid_start_index = pkt.find(b"\x02\x15")
+
+        if uuid_start_index != -1:
+            # Extract the 128-bit UUID (16 bytes) from the packet
+            uuid_bytes = pkt[uuid_start_index + 2: uuid_start_index + 18]
+
+            uuid_hex = "".join("{:02x}".format(byte) for byte in uuid_bytes)
+            major = returnnumberpacket(pkt[uuid_start_index + 18: uuid_start_index + 20])
+            minor = returnnumberpacket(pkt[uuid_start_index + 20: uuid_start_index + 22])
+
+            if uuid_hex.startswith("a495bb"):
+                beacons.append({
+                    'uuid': uuid_hex,
+                    'major': major,
+                    'minor': minor
+                })
+            done = True
+
         ptype, event, plen = struct.unpack('BBB', pkt[:3])
 
-        if event == LE_META_EVENT:
-            subevent, = struct.unpack('B', pkt[3:4])
-            pkt = pkt[4:]
-            if subevent == EVT_LE_CONN_COMPLETE:
-                le_handle_connection_complete(pkt)
-            elif subevent == EVT_LE_ADVERTISING_REPORT:
-                num_reports = struct.unpack('B', pkt[0:1])[0]
-                report_pkt_offset = 0
-                for i in range(0, num_reports):
-                    beacons.append({
-                        'uuid': returnstringpacket(pkt[report_pkt_offset - 22: report_pkt_offset - 6]),
-                        'minor': returnnumberpacket(pkt[report_pkt_offset - 4: report_pkt_offset - 2]),
-                        'major': returnnumberpacket(pkt[report_pkt_offset - 6: report_pkt_offset - 4])
-                    })
-                done = True
     sock.setsockopt(bluez.SOL_HCI, bluez.HCI_FILTER, old_filter)
     return beacons
