@@ -1,53 +1,57 @@
+# Clean Testing Config using:
+#  tilt-sim
+#  tplink-smartplug-simulator
+#  blynk.cloud
+#
+# Created: 08-FEB-2024
+# Version: 1.0
+
 consoleLoglevel: WARNING
 port: 8080
-enableWebUI: false
+enableWebUI: True
 
 sensors:
-  - RecircTemp:
-     plugin: DummySensor 
-     fakeTemp: 66
-#  - RecircTemp:
-#      plugin: W1Sensor 
-#      id: 28-000004b8240b
-#      offset: 1.2
+  - TiltOrange:
+     plugin: TiltSensor 
+     color: Orange
+     tempclbr: 0
+     gravclbr: 0
+     startgrav: 1.050
 
 actors:
-  - Heater:
-     plugin: DummyActor
-  - Pump:
-      plugin: DummyActor
-#  - Pump:
-#       plugin: GPIOActor
-#       gpio: 17
-#   - Heater:
-#       plugin: GPIOActor
-#       gpio: 18
-#       pwmFrequency: 2
+  - Cooling:
+     plugin: TPLinkActor
+     ip: 192.168.254.12
 
 controllers:
-  - KettleController:
-      plugin: PIDLogic
+  - Fridge:
+      plugin: HysteresisLogic
       logicCoeffs:
-        p: 50
-        i: 2
-        d: 10 
-      actor: Heater
-      sensor: RecircTemp
-      initialSetpoint: 67
+        allowedOvershoot: 0.4
+        allowedUndershoot: 0.4
+        keepCold: yes
+      actor: Cooling
+      sensor: TiltOrange
+      initialSetpoint: 30.0 
+      initialState: on
 
 extensions:
-   - web:
-       plugin: SimpleWebView
-       endpoints:
+  - web:
+      plugin: SimpleWebView
+      endpoints:
         - enable
         - setpoint
         - pump
+          #  - blynk:
+          #      plugin: Blynk
+          #      token: vRlSNd6zTg2XxD7PQ-YCcApIeeo-tnTu
 
 connections:
-  - web.enable=>KettleController.state
-  - Heater.power=>web.heaterpower
-  - RecircTemp.temperature=>web.recirtemp
-  - web.setpoint=>KettleController.setpoint
-  - KettleController.setpoint=>web.setpoint
-  - web.pump=>Pump.state
-
+  #  - TiltOrange.temperature=>blynk.v1
+  #  - TiltOrange.gravity=>blynk.v2
+  #  - Cooling.power=>blynk.v6
+  #  - Heater.power=>blynk.v7
+  #  - Fridge.initialSetpoint=>blynk.v8
+  #  - blynk.v8=>Fridge.setpoint
+  - FermentationHeat.state=>web.enable
+  - web.enable=>FermentationHeat.state
