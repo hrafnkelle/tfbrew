@@ -16,12 +16,19 @@ sensors:
      color: Orange
      tempclbr: 0
      gravclbr: 0
-     startgrav: 1.050
+     startgrav: 1.80
+  - AmbientTemp:
+     plugin: DummySensor 
+     fakeTemp: 60
 
 actors:
   - Cooling:
      plugin: TPLinkActor
-     ip: 192.168.254.12
+     ip: 192.168.111.1
+       #ip: 192.168.254.12
+  - Heating:
+     plugin: TPLinkActor
+     ip: 192.168.111.2
 
 controllers:
   - Fridge:
@@ -32,26 +39,50 @@ controllers:
         keepCold: yes
       actor: Cooling
       sensor: TiltOrange
-      initialSetpoint: 30.0 
+      initialSetpoint: 55.0 
       initialState: on
+  - Heater:
+      plugin: HysteresisLogic
+      logicCoeffs:
+        allowedOvershoot: 0.4
+        allowedUndershoot: 0.4
+        keepHot: yes
+      actor: Heating
+      sensor: TiltOrange
+      initialSetpoint: 50.0 
 
 extensions:
+  - blynk:
+      plugin: Blynk
+      server: blynk.cloud
+      token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   - web:
       plugin: SimpleWebView
       endpoints:
         - enable
         - setpoint
-        - pump
-          #  - blynk:
-          #      plugin: Blynk
-          #      token: vRlSNd6zTg2XxD7PQ-YCcApIeeo-tnTu
 
 connections:
-  #  - TiltOrange.temperature=>blynk.v1
-  #  - TiltOrange.gravity=>blynk.v2
-  #  - Cooling.power=>blynk.v6
-  #  - Heater.power=>blynk.v7
-  #  - Fridge.initialSetpoint=>blynk.v8
-  #  - blynk.v8=>Fridge.setpoint
-  - Fridge.state=>web.enable
-  - web.enable=>Fridge.state
+  - TiltOrange.brix=>blynk.v0
+  - TiltOrange.temperature=>blynk.v1
+  - TiltOrange.gravity=>blynk.v2
+  - TiltOrange.abv=>blynk.v3
+  - TiltOrange.atten=>blynk.v4
+  - TiltOrange.ograv=>blynk.v5
+  - Cooling.power=>blynk.v6
+  - Fridge.initialSetpoint=>blynk.v7
+  - Fridge.initialSetpoint=>blynk.v8
+  - Fridge.allowedUndershoot=>blynk.v9
+  - Fridge.allowedOvershoot=>blynk.v10
+  - Heating.power=>blynk.v11
+  - Heater.initialSetpoint=>blynk.v12
+  - Heater.initialSetpoint=>blynk.v13 
+  - Heater.allowedUndershoot=>blynk.v14
+  - Heater.allowedOvershoot=>blynk.v15 
+  - blynk.v8=>Fridge.setpoint
+  - blynk.v9=>Fridge.undershoot
+  - blynk.v10=>Fridge.overshoot
+  - blynk.v13=>Heater.setpoint
+  - blynk.v14=>Heater.undershoot
+  - blynk.v15=>Heater.overshoot
+  - AmbientTemp.temperature=>blynk.v16

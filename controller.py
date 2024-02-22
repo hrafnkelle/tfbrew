@@ -1,3 +1,11 @@
+# controller.py
+# 
+# Changelog:
+#  20-FEB-24: Changed self._autoMode to True and includeSetpoint to True to set to automated temp control.
+#  22-FEB-24: Added event.notify for initialSetpoint to initiate push of initial setpoint to Blynk and Web.
+#
+# Ver: 1.0
+
 import asyncio
 import logging
 from collections import deque
@@ -19,7 +27,7 @@ class Controller(interfaces.Component, interfaces.Runnable):
     def __init__(self, name, sensor, actor, logic, agitator=None, targetTemp=0.0, initiallyEnabled=False):
         self.name = name
         self._enabled = initiallyEnabled
-        self._autoMode = False
+        self._autoMode = True
         self.sensor = sensor
         self.actor = actor
         self.agitator = agitator
@@ -31,9 +39,10 @@ class Controller(interfaces.Component, interfaces.Runnable):
         self.setpoint_history = deque(maxlen=100)
         sockjs.add_endpoint(app, prefix='/controllers/%s/ws'%self.name, name='%s-ws'%self.name, handler=self.websocket_handler)
         asyncio.ensure_future(self.run())
+        event.notify(event.Event(source=self.name, endpoint='initialSetpoint', data=self.targetTemp))
 
     def callback(self, endpoint, data):
-        includeSetpoint = False
+        includeSetpoint = True
         if endpoint in ['state', 'enabled']:
             self.enabled = bool(data)
             self.actor.updatePower(0.0)
@@ -54,7 +63,6 @@ class Controller(interfaces.Component, interfaces.Runnable):
             self.agitator.updatePower(pwr)
         else:
             self.logic.callback(endpoint, data)
-            #logger.warning("Unknown type/endpoint for Contorller %s"%endpoint)
         self.broadcastDetails(includeSetpoint)        
 
     def setSetpoint(self, setpoint):

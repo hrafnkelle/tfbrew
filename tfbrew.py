@@ -1,9 +1,13 @@
 # tfbrew.py
-# 
+# Backend for a yet another brewing application controlled by a Blynk frontend. Originally created by: hrafnkelle (Hrafnkell Eiríksson)
+#
 # Changelog:
 #  08-FEB-24: Part of fix for loop exception.  Think due to new OS or Python versions (Fix #1)
 #
 # Ver: 1.0
+
+"""
+"""
 
 import sys, os
 import importlib
@@ -35,12 +39,19 @@ logging.getLogger('').addHandler(console)
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "plugins"))
 
+for conn in config['connections']:
+    (sendEvent, recvEvent) = conn.split('=>')
+    (sendComponent, sendType) = sendEvent.split('.')
+    (recvComponent, recvType) = recvEvent.split('.')
+    event.register(sendEvent, lambda event, rc=recvComponent, rt=recvType: components[rc].callback(rt, event))
+
 for componentType in ['sensors', 'actors', 'extensions']:
     for component in config[componentType]:
         for name, attribs in component.items():
             logging.info("setting up %s"%name)
             plugin = importlib.import_module('plugins.%s'%attribs['plugin'])
             components[name] = plugin.factory(name, attribs)
+
 for ctrl in config['controllers']:
     for name, attribs in ctrl.items():
         logger.info("setting up %s"%name)
@@ -52,13 +63,6 @@ for ctrl in config['controllers']:
         initialSetpoint = attribs.get('initialSetpoint', 67.0)
         initiallyEnabled = True if attribs.get('initialState', 'on') == 'on' else 'off'
         components[name] = controller.Controller(name, sensor, actor, logic, agitator, initialSetpoint, initiallyEnabled)
-
-
-for conn in config['connections']:
-    (sendEvent, recvEvent) = conn.split('=>')
-    (sendComponent, sendType) = sendEvent.split('.')
-    (recvComponent, recvType) = recvEvent.split('.')
-    event.register(sendEvent, lambda event, rc=recvComponent, rt=recvType: components[rc].callback(rt, event))
 
 async def start_background_tasks(app):
     pass
@@ -81,7 +85,11 @@ app.router.add_get('/', rootRouteHandler)
 if isWebUIenabled:
     app.router.add_static('/static', 'static/')
 
-# Add if and loop= to pass the event loop (Fix #1)
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     web.run_app(app, port=config.get('port', 8080), loop=loop)
+
+for route in app.router.routes():
+    if hasattr(route, 'handler'):
+        print(f"Method: {route.method}, Path: {route._path}, Handler: {route.handler}")
+

@@ -1,7 +1,7 @@
 # ../TiltSensor/__init__.py
 # 
 # Changelog:
-#  08-FEB-24: Added abv, attenuation, and brix. Changed return value to Fahrenheit not Celsius. Clean up work.
+#  08-FEB-24: Added temp/gravity calibration, starting grav, abv, attenuation, and brix. Changed return value to Fahrenheit not Celsius. Clean up work.
 #
 # Ver: 1.0
 
@@ -50,7 +50,7 @@ def to_celsius(fahrenheit):
     return round((fahrenheit - 32.0) / 1.8, 2)
 
 def to_brix(sg):
-    brix = round((((182.4601*sg  -775.6821)*sg + 1262.7794)*sg - 669.5622),2)
+    brix = round((((182.4601*sg  -775.6821)*sg + 1262.7794)*sg - 669.5622), 2)
     return brix
 
 def to_abv(sg,stgrav):
@@ -103,8 +103,6 @@ class TiltSensor(interfaces.Sensor):
                     #Change reutrn value to Fahrenheit. Original line kept for flexibility
                     #return (to_celsius(beacon['major']), beacon['minor'])
                     return (beacon['major'], beacon['minor'])
-            else:
-                logger.debug("Nothing found from bluetooth")
     
     def temp(self):
         return self.lastTemp

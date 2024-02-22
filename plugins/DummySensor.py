@@ -1,6 +1,11 @@
-"""
-Sensor that generates fake data by adding noise to an expected
-"""
+# DummySensor.py
+# 
+# Changelog:
+#  22-FEB-24: Updated temp to use 2.5 standard deviations and round to 1st decimal
+#               to make temp changes more noticable during testing.
+#
+# Ver: 1.0
+
 import asyncio
 from random import normalvariate
 
@@ -26,7 +31,7 @@ class DummySensor(Sensor):
 
     async def readTemp(self):
         await asyncio.sleep(2)
-        temp = normalvariate(self.fakeTemp, 0.5)
+        temp = round(normalvariate(self.fakeTemp, 2.5), 1)
         notify(Event(source=self.name, endpoint='temperature', data=temp))
         return temp
 
@@ -38,7 +43,6 @@ class DummySensor(Sensor):
             self.fakeTemp = float(data)
         else:
             super.callback(endpoint, data)
-
 
     # def get(self, request):
     #     return web.Response(text="%f"%self.temp())

@@ -24,3 +24,4 @@ def notify(event):
                 asyncio.ensure_future(observer(event.data))
             else:
                 observer(event.data)
+
