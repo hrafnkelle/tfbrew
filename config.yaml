@@ -1,88 +1,127 @@
-# Clean Testing Config using:
-#  tilt-sim
-#  tplink-smartplug-simulator
-#  blynk.cloud
 #
 # Created: 08-FEB-2024
 # Version: 1.0
 
+# Log level for console output
 consoleLoglevel: WARNING
+
+# Port for the web server
 port: 8080
+
+# Enable or disable the Web UI
 enableWebUI: True
 
 sensors:
-  - TiltOrange:
-     plugin: TiltSensor 
-     color: Orange
-     tempclbr: 0
-     gravclbr: 0
-     startgrav: 1.80
+  - TiltYellow:
+      # Plugin to use for this sensor
+      plugin: TiltSensor 
+      # Color of the Tilt hydrometer
+      color: Yellow
+      # Temperature calibration offset
+      tempclbr: 0
+      # Gravity calibration offset
+      gravclbr: 0
+      # Starting gravity for the Tilt
+      startgrav: 1.80
+      # Time interval for sending data (in seconds)
+      sendtime: 10
+      
+  - TiltBlue:
+      # Plugin to use for this sensor
+      plugin: TiltSensor 
+      # Color of the Tilt hydrometer
+      color: Blue
+      # Temperature calibration offset
+      tempclbr: 0
+      # Gravity calibration offset
+      gravclbr: 0
+      # Starting gravity for the Tilt
+      startgrav: 1.30
+      # Time interval for sending data (in seconds)
+      sendtime: 10
+
   - AmbientTemp:
-     plugin: DummySensor 
-     fakeTemp: 60
+      # Dummy sensor for ambient temperature
+      plugin: DummySensor 
+      # Fake temperature value for testing
+      fakeTemp: 60
 
 actors:
   - Cooling:
-     plugin: TPLinkActor
-     ip: 192.168.111.1
-       #ip: 192.168.254.12
+      # Plugin for cooling system
+      plugin: DummyActor
+      # Uncomment below lines if using a TPLinkActor with a specific IP address
+      #plugin: TPLinkActor
+      #ip: 192.168.111.1
+
   - Heating:
-     plugin: TPLinkActor
-     ip: 192.168.111.2
+      # Plugin for heating system
+      plugin: DummyActor
+      # Uncomment below lines if using a TPLinkActor with a specific IP address
+      #plugin: TPLinkActor
+      #ip: 192.168.111.2
 
 controllers:
   - Fridge:
+      # Plugin for controlling fridge temperature using hysteresis logic
       plugin: HysteresisLogic
       logicCoeffs:
+        # Overshoot allowed above setpoint
         allowedOvershoot: 0.4
+        # Undershoot allowed below setpoint
         allowedUndershoot: 0.4
+        # Whether to keep the fridge cold
         keepCold: yes
+      # Actor to control the cooling
       actor: Cooling
-      sensor: TiltOrange
+      # Sensor to monitor ambient temperature
+      sensor: AmbientTemp
+      # Initial temperature setpoint for the fridge
       initialSetpoint: 55.0 
+      # Initial state of the fridge controller
       initialState: on
+
   - Heater:
+      # Plugin for controlling heater temperature using hysteresis logic
       plugin: HysteresisLogic
       logicCoeffs:
+        # Overshoot allowed above setpoint
         allowedOvershoot: 0.4
+        # Undershoot allowed below setpoint
         allowedUndershoot: 0.4
+        # Whether to keep the heater hot
         keepHot: yes
+      # Actor to control the cooling
       actor: Heating
-      sensor: TiltOrange
+      # Sensor to monitor ambient temperature
+      sensor: AmbientTemp
+      # Initial temperature setpoint for the heater
       initialSetpoint: 50.0 
+      # Initial state of the heater controller
+      initialState: off
 
 extensions:
-  - blynk:
-      plugin: Blynk
-      server: blynk.cloud
-      token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   - web:
+      # Web interface plugin
       plugin: SimpleWebView
       endpoints:
         - enable
         - setpoint
 
 connections:
-  - TiltOrange.brix=>blynk.v0
-  - TiltOrange.temperature=>blynk.v1
-  - TiltOrange.gravity=>blynk.v2
-  - TiltOrange.abv=>blynk.v3
-  - TiltOrange.atten=>blynk.v4
-  - TiltOrange.ograv=>blynk.v5
-  - Cooling.power=>blynk.v6
-  - Fridge.initialSetpoint=>blynk.v7
-  - Fridge.initialSetpoint=>blynk.v8
-  - Fridge.allowedUndershoot=>blynk.v9
-  - Fridge.allowedOvershoot=>blynk.v10
-  - Heating.power=>blynk.v11
-  - Heater.initialSetpoint=>blynk.v12
-  - Heater.initialSetpoint=>blynk.v13 
-  - Heater.allowedUndershoot=>blynk.v14
-  - Heater.allowedOvershoot=>blynk.v15 
-  - blynk.v8=>Fridge.setpoint
-  - blynk.v9=>Fridge.undershoot
-  - blynk.v10=>Fridge.overshoot
-  - blynk.v13=>Heater.setpoint
-  - blynk.v14=>Heater.undershoot
-  - blynk.v15=>Heater.overshoot
-  - AmbientTemp.temperature=>blynk.v16
+  # Connect the web interface enable switch to the kettle controller state
+  - web.enable=>KettleController.state
+  
+  # Monitor heater power from the web interface
+  - Heater.power=>web.heaterpower
+  
+  # Monitor recirculation temperature from the web interface
+  - RecircTemp.temperature=>web.recirtemp
+  
+  # Set the setpoint from the web interface and reflect it on the kettle controller
+  - web.setpoint=>KettleController.setpoint
+  - KettleController.setpoint=>web.setpoint
+  
+  # Control pump state from the web interface
+  - web.pump=>Pump.state
+
