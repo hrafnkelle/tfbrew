@@ -7,3 +7,4 @@ tcl
 __pycache__
 *.log
 pip-selfcheck.json
+venv
