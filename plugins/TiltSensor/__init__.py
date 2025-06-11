@@ -59,8 +59,6 @@ class TiltSensor(interfaces.Sensor):
        except:
            logger.error('error accessing bluetooth device...')
 
-       asyncio.get_event_loop().create_task(self.run())
-
     async def run(self):
         while True:
             (temp, gravity) = await asyncio.get_event_loop().run_in_executor(None, self.monitor_tilt)

@@ -19,8 +19,6 @@ class W1Sensor(Sensor):
         self.offset = offset
         self.lastTemp = 0.0
         self.pollInterval = pollInterval
-        asyncio.get_event_loop().create_task(self.run())
-
 
     async def run(self):
         while True:

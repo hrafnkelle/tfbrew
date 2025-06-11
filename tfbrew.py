@@ -58,7 +58,21 @@ for conn in config['connections']:
     event.register(sendEvent, lambda event, rc=recvComponent, rt=recvType: components[rc].callback(rt, event))
 
 async def start_background_tasks(app):
-    pass
+    # iterate throug components and start their run methods if they are Runnable
+    for name, component in components.items():
+        if isinstance(component, interfaces.Runnable):
+            logger.info("Starting background task for %s"%name)
+            asyncio.create_task(component.run())
+        else:
+            logger.debug("Component %s is not Runnable, skipping."%name)
+    # iterate through controllers and start their run methods
+    for name, component in components.items():
+        if isinstance(component, controller.Controller):
+            logger.info("Starting background task for controller %s"%name)
+            asyncio.create_task(component.run())
+        else:
+            logger.debug("Component %s is not a Controller, skipping."%name)
+
 
 async def cleanup_background_tasks(app):
     pass

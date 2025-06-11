@@ -16,8 +16,6 @@ class DummySensor(Sensor):
         self.fakeTemp = fakeTemp
         self.lastTemp = 0
         self.name = name
-        asyncio.get_event_loop().create_task(self.run())
-
 
     async def run(self):
         while True:

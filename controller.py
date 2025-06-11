@@ -30,7 +30,6 @@ class Controller(interfaces.Component, interfaces.Runnable):
         self.temp_history = deque(maxlen=100)
         self.setpoint_history = deque(maxlen=100)
         sockjs.add_endpoint(app, prefix='/controllers/%s/ws'%self.name, name='%s-ws'%self.name, handler=self.websocket_handler)
-        asyncio.ensure_future(self.run())
 
     def callback(self, endpoint, data):
         includeSetpoint = False
@@ -118,10 +117,10 @@ class Controller(interfaces.Component, interfaces.Runnable):
 
 
 
-    async def websocket_handler(self, msg, session):
-        if msg.type == sockjs.MSG_OPEN:
+    async def websocket_handler(self, manager, session, msg):
+        if msg.type == sockjs.MsgType.OPEN:
             self.broadcastDetails()
-        if msg.type == sockjs.MSG_MESSAGE:
+        if msg.type == sockjs.MsgType.MESSAGE:
             data = json.loads(msg.data)
             for endpoint, value in data.items():
                 self.callback(endpoint, value)

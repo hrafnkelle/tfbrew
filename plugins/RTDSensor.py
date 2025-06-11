@@ -33,9 +33,6 @@ class RTDSensor(Sensor):
         self.spi.mode = 0b01
         self.spi.max_speed_hz = 500000
 
-        asyncio.get_event_loop().create_task(self.run())
-
-
     async def run(self):
         while True:
             try:

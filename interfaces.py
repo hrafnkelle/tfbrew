@@ -8,7 +8,7 @@ class Component:
         pass
 
 class Runnable:
-    def run(self, app):
+    async def run(self):
         pass
 
 class Measurable:
@@ -17,7 +17,7 @@ class Measurable:
 
 class Sensor(Component, Runnable, Measurable):
 
-    async def run(self):
+    async def run(sel):
         pass
 
     async def readTemp(self):
